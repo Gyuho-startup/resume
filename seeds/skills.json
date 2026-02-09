@@ -1,0 +1,327 @@
+{
+  "skills": [
+    {
+      "slug": "python",
+      "name": "Python",
+      "category": "Programming Languages",
+      "atsKeyword": true,
+      "searchVolume": "high",
+      "relatedRoles": ["software-developer", "data-analyst", "web-developer"],
+      "relatedSkills": ["javascript", "sql", "data-analysis"],
+      "proficiencyLevels": ["beginner", "intermediate", "advanced"]
+    },
+    {
+      "slug": "javascript",
+      "name": "JavaScript",
+      "category": "Programming Languages",
+      "atsKeyword": true,
+      "searchVolume": "high",
+      "relatedRoles": ["web-developer", "software-developer", "ux-designer"],
+      "relatedSkills": ["html-css", "react", "node-js"],
+      "proficiencyLevels": ["beginner", "intermediate", "advanced"]
+    },
+    {
+      "slug": "excel",
+      "name": "Microsoft Excel",
+      "category": "Software Tools",
+      "atsKeyword": true,
+      "searchVolume": "very-high",
+      "relatedRoles": ["data-analyst", "business-analyst", "accountant", "project-coordinator"],
+      "relatedSkills": ["data-analysis", "microsoft-office", "sql"],
+      "proficiencyLevels": ["basic", "intermediate", "advanced"]
+    },
+    {
+      "slug": "sql",
+      "name": "SQL",
+      "category": "Programming Languages",
+      "atsKeyword": true,
+      "searchVolume": "high",
+      "relatedRoles": ["data-analyst", "software-developer", "business-analyst"],
+      "relatedSkills": ["python", "data-analysis", "excel"],
+      "proficiencyLevels": ["beginner", "intermediate", "advanced"]
+    },
+    {
+      "slug": "data-analysis",
+      "name": "Data Analysis",
+      "category": "Technical Skills",
+      "atsKeyword": true,
+      "searchVolume": "high",
+      "relatedRoles": ["data-analyst", "business-analyst", "accountant"],
+      "relatedSkills": ["excel", "python", "sql"],
+      "proficiencyLevels": ["basic", "intermediate", "advanced"]
+    },
+    {
+      "slug": "project-management",
+      "name": "Project Management",
+      "category": "Business Skills",
+      "atsKeyword": true,
+      "searchVolume": "high",
+      "relatedRoles": ["project-coordinator", "operations-manager", "product-manager"],
+      "relatedSkills": ["agile", "scrum", "leadership", "time-management"],
+      "proficiencyLevels": ["basic", "intermediate", "advanced"]
+    },
+    {
+      "slug": "communication",
+      "name": "Communication",
+      "category": "Soft Skills",
+      "atsKeyword": true,
+      "searchVolume": "very-high",
+      "relatedRoles": ["customer-service", "sales-executive", "content-writer", "human-resources"],
+      "relatedSkills": ["teamwork", "public-speaking", "presentation"],
+      "proficiencyLevels": ["effective", "strong", "excellent"]
+    },
+    {
+      "slug": "teamwork",
+      "name": "Teamwork",
+      "category": "Soft Skills",
+      "atsKeyword": true,
+      "searchVolume": "high",
+      "relatedRoles": ["software-developer", "project-coordinator", "customer-service"],
+      "relatedSkills": ["communication", "collaboration", "leadership"],
+      "proficiencyLevels": ["collaborative", "strong", "excellent"]
+    },
+    {
+      "slug": "problem-solving",
+      "name": "Problem Solving",
+      "category": "Soft Skills",
+      "atsKeyword": true,
+      "searchVolume": "very-high",
+      "relatedRoles": ["software-developer", "business-analyst", "customer-service"],
+      "relatedSkills": ["critical-thinking", "analytical", "decision-making"],
+      "proficiencyLevels": ["effective", "strong", "excellent"]
+    },
+    {
+      "slug": "microsoft-office",
+      "name": "Microsoft Office",
+      "category": "Software Tools",
+      "atsKeyword": true,
+      "searchVolume": "very-high",
+      "relatedRoles": ["human-resources", "project-coordinator", "accountant"],
+      "relatedSkills": ["excel", "word", "powerpoint"],
+      "proficiencyLevels": ["basic", "intermediate", "advanced"]
+    },
+    {
+      "slug": "google-analytics",
+      "name": "Google Analytics",
+      "category": "Marketing Tools",
+      "atsKeyword": true,
+      "searchVolume": "medium",
+      "relatedRoles": ["digital-marketing", "social-media-manager", "content-writer"],
+      "relatedSkills": ["seo", "content-marketing", "data-analysis"],
+      "proficiencyLevels": ["basic", "intermediate", "advanced"]
+    },
+    {
+      "slug": "seo",
+      "name": "SEO (Search Engine Optimization)",
+      "category": "Marketing Skills",
+      "atsKeyword": true,
+      "searchVolume": "high",
+      "relatedRoles": ["digital-marketing", "content-writer", "social-media-manager"],
+      "relatedSkills": ["google-analytics", "content-marketing", "keyword-research"],
+      "proficiencyLevels": ["basic", "intermediate", "advanced"]
+    },
+    {
+      "slug": "content-marketing",
+      "name": "Content Marketing",
+      "category": "Marketing Skills",
+      "atsKeyword": true,
+      "searchVolume": "medium",
+      "relatedRoles": ["digital-marketing", "content-writer", "social-media-manager"],
+      "relatedSkills": ["seo", "copywriting", "communication"],
+      "proficiencyLevels": ["basic", "intermediate", "advanced"]
+    },
+    {
+      "slug": "adobe-photoshop",
+      "name": "Adobe Photoshop",
+      "category": "Design Tools",
+      "atsKeyword": true,
+      "searchVolume": "medium",
+      "relatedRoles": ["graphic-designer", "ux-designer", "social-media-manager"],
+      "relatedSkills": ["adobe-illustrator", "figma", "creativity"],
+      "proficiencyLevels": ["basic", "intermediate", "advanced"]
+    },
+    {
+      "slug": "adobe-illustrator",
+      "name": "Adobe Illustrator",
+      "category": "Design Tools",
+      "atsKeyword": true,
+      "searchVolume": "medium",
+      "relatedRoles": ["graphic-designer", "ux-designer", "web-developer"],
+      "relatedSkills": ["adobe-photoshop", "figma", "creativity"],
+      "proficiencyLevels": ["basic", "intermediate", "advanced"]
+    },
+    {
+      "slug": "html-css",
+      "name": "HTML & CSS",
+      "category": "Programming Languages",
+      "atsKeyword": true,
+      "searchVolume": "high",
+      "relatedRoles": ["web-developer", "software-developer", "ux-designer"],
+      "relatedSkills": ["javascript", "react", "responsive-design"],
+      "proficiencyLevels": ["beginner", "intermediate", "advanced"]
+    },
+    {
+      "slug": "react",
+      "name": "React",
+      "category": "Frameworks & Libraries",
+      "atsKeyword": true,
+      "searchVolume": "high",
+      "relatedRoles": ["web-developer", "software-developer", "ux-designer"],
+      "relatedSkills": ["javascript", "html-css", "node-js"],
+      "proficiencyLevels": ["beginner", "intermediate", "advanced"]
+    },
+    {
+      "slug": "node-js",
+      "name": "Node.js",
+      "category": "Frameworks & Libraries",
+      "atsKeyword": true,
+      "searchVolume": "medium",
+      "relatedRoles": ["web-developer", "software-developer", "backend-developer"],
+      "relatedSkills": ["javascript", "react", "api-development"],
+      "proficiencyLevels": ["beginner", "intermediate", "advanced"]
+    },
+    {
+      "slug": "java",
+      "name": "Java",
+      "category": "Programming Languages",
+      "atsKeyword": true,
+      "searchVolume": "high",
+      "relatedRoles": ["software-developer", "backend-developer", "android-developer"],
+      "relatedSkills": ["python", "object-oriented-programming", "spring"],
+      "proficiencyLevels": ["beginner", "intermediate", "advanced"]
+    },
+    {
+      "slug": "c-plus-plus",
+      "name": "C++",
+      "category": "Programming Languages",
+      "atsKeyword": true,
+      "searchVolume": "medium",
+      "relatedRoles": ["software-developer", "game-developer", "embedded-systems"],
+      "relatedSkills": ["c", "python", "algorithms"],
+      "proficiencyLevels": ["beginner", "intermediate", "advanced"]
+    },
+    {
+      "slug": "agile",
+      "name": "Agile Methodology",
+      "category": "Business Skills",
+      "atsKeyword": true,
+      "searchVolume": "medium",
+      "relatedRoles": ["project-coordinator", "product-manager", "software-developer"],
+      "relatedSkills": ["scrum", "project-management", "teamwork"],
+      "proficiencyLevels": ["familiar", "experienced", "certified"]
+    },
+    {
+      "slug": "scrum",
+      "name": "Scrum",
+      "category": "Business Skills",
+      "atsKeyword": true,
+      "searchVolume": "medium",
+      "relatedRoles": ["project-coordinator", "product-manager", "software-developer"],
+      "relatedSkills": ["agile", "project-management", "teamwork"],
+      "proficiencyLevels": ["familiar", "experienced", "certified"]
+    },
+    {
+      "slug": "leadership",
+      "name": "Leadership",
+      "category": "Soft Skills",
+      "atsKeyword": true,
+      "searchVolume": "high",
+      "relatedRoles": ["operations-manager", "product-manager", "sales-executive"],
+      "relatedSkills": ["communication", "teamwork", "decision-making"],
+      "proficiencyLevels": ["emerging", "strong", "excellent"]
+    },
+    {
+      "slug": "time-management",
+      "name": "Time Management",
+      "category": "Soft Skills",
+      "atsKeyword": true,
+      "searchVolume": "high",
+      "relatedRoles": ["project-coordinator", "operations-manager", "customer-service"],
+      "relatedSkills": ["organization", "prioritization", "productivity"],
+      "proficiencyLevels": ["effective", "strong", "excellent"]
+    },
+    {
+      "slug": "attention-to-detail",
+      "name": "Attention to Detail",
+      "category": "Soft Skills",
+      "atsKeyword": true,
+      "searchVolume": "high",
+      "relatedRoles": ["accountant", "data-analyst", "graphic-designer"],
+      "relatedSkills": ["accuracy", "quality-assurance", "precision"],
+      "proficiencyLevels": ["strong", "exceptional", "meticulous"]
+    },
+    {
+      "slug": "customer-service",
+      "name": "Customer Service",
+      "category": "Service Skills",
+      "atsKeyword": true,
+      "searchVolume": "very-high",
+      "relatedRoles": ["customer-service", "sales-executive", "human-resources"],
+      "relatedSkills": ["communication", "problem-solving", "empathy"],
+      "proficiencyLevels": ["effective", "strong", "excellent"]
+    },
+    {
+      "slug": "sales",
+      "name": "Sales",
+      "category": "Sales Skills",
+      "atsKeyword": true,
+      "searchVolume": "high",
+      "relatedRoles": ["sales-executive", "business-development", "account-manager"],
+      "relatedSkills": ["negotiation", "communication", "persuasion"],
+      "proficiencyLevels": ["basic", "experienced", "expert"]
+    },
+    {
+      "slug": "negotiation",
+      "name": "Negotiation",
+      "category": "Business Skills",
+      "atsKeyword": true,
+      "searchVolume": "medium",
+      "relatedRoles": ["sales-executive", "business-analyst", "procurement"],
+      "relatedSkills": ["sales", "communication", "persuasion"],
+      "proficiencyLevels": ["basic", "effective", "expert"]
+    },
+    {
+      "slug": "public-speaking",
+      "name": "Public Speaking",
+      "category": "Soft Skills",
+      "atsKeyword": true,
+      "searchVolume": "medium",
+      "relatedRoles": ["sales-executive", "product-manager", "training"],
+      "relatedSkills": ["communication", "presentation", "confidence"],
+      "proficiencyLevels": ["comfortable", "confident", "expert"]
+    },
+    {
+      "slug": "research",
+      "name": "Research",
+      "category": "Analytical Skills",
+      "atsKeyword": true,
+      "searchVolume": "medium",
+      "relatedRoles": ["content-writer", "business-analyst", "ux-designer"],
+      "relatedSkills": ["data-analysis", "critical-thinking", "attention-to-detail"],
+      "proficiencyLevels": ["basic", "thorough", "advanced"]
+    }
+  ],
+  "metadata": {
+    "version": "1.0.0",
+    "phase": "1-mvp",
+    "totalSkills": 30,
+    "lastUpdated": "2026-02-09",
+    "categories": [
+      "Programming Languages",
+      "Software Tools",
+      "Technical Skills",
+      "Business Skills",
+      "Soft Skills",
+      "Marketing Tools",
+      "Marketing Skills",
+      "Design Tools",
+      "Frameworks & Libraries",
+      "Service Skills",
+      "Sales Skills",
+      "Analytical Skills"
+    ],
+    "targetAudience": "UK entry-level job seekers",
+    "atsOptimized": true,
+    "expansionPlan": "Add more skills in Phase 2 based on search query data and emerging technologies"
+  }
+}

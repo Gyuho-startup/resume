@@ -1,0 +1,173 @@
+{
+  "roles": [
+    {
+      "slug": "software-developer",
+      "name": "Software Developer",
+      "category": "Technology",
+      "searchVolume": "high",
+      "relatedSkills": ["python", "javascript", "react", "problem-solving", "teamwork"],
+      "relatedRoles": ["web-developer", "data-analyst", "ux-designer"]
+    },
+    {
+      "slug": "data-analyst",
+      "name": "Data Analyst",
+      "category": "Technology",
+      "searchVolume": "high",
+      "relatedSkills": ["python", "sql", "excel", "data-analysis", "communication"],
+      "relatedRoles": ["software-developer", "business-analyst", "project-coordinator"]
+    },
+    {
+      "slug": "digital-marketing",
+      "name": "Digital Marketing Specialist",
+      "category": "Marketing",
+      "searchVolume": "high",
+      "relatedSkills": ["seo", "google-analytics", "content-marketing", "communication", "social-media"],
+      "relatedRoles": ["social-media-manager", "content-writer", "graphic-designer"]
+    },
+    {
+      "slug": "graphic-designer",
+      "name": "Graphic Designer",
+      "category": "Design",
+      "searchVolume": "medium",
+      "relatedSkills": ["adobe-photoshop", "adobe-illustrator", "attention-to-detail", "communication", "creativity"],
+      "relatedRoles": ["ux-designer", "web-developer", "social-media-manager"]
+    },
+    {
+      "slug": "customer-service",
+      "name": "Customer Service Representative",
+      "category": "Service",
+      "searchVolume": "high",
+      "relatedSkills": ["communication", "problem-solving", "customer-service", "teamwork", "time-management"],
+      "relatedRoles": ["sales-executive", "human-resources", "operations-manager"]
+    },
+    {
+      "slug": "sales-executive",
+      "name": "Sales Executive",
+      "category": "Sales",
+      "searchVolume": "high",
+      "relatedSkills": ["sales", "negotiation", "communication", "customer-service", "leadership"],
+      "relatedRoles": ["customer-service", "business-analyst", "operations-manager"]
+    },
+    {
+      "slug": "content-writer",
+      "name": "Content Writer",
+      "category": "Marketing",
+      "searchVolume": "medium",
+      "relatedSkills": ["communication", "research", "seo", "content-marketing", "attention-to-detail"],
+      "relatedRoles": ["digital-marketing", "social-media-manager", "copywriter"]
+    },
+    {
+      "slug": "social-media-manager",
+      "name": "Social Media Manager",
+      "category": "Marketing",
+      "searchVolume": "medium",
+      "relatedSkills": ["communication", "content-marketing", "google-analytics", "creativity", "teamwork"],
+      "relatedRoles": ["digital-marketing", "content-writer", "graphic-designer"]
+    },
+    {
+      "slug": "business-analyst",
+      "name": "Business Analyst",
+      "category": "Business",
+      "searchVolume": "medium",
+      "relatedSkills": ["data-analysis", "excel", "communication", "problem-solving", "project-management"],
+      "relatedRoles": ["data-analyst", "project-coordinator", "operations-manager"]
+    },
+    {
+      "slug": "project-coordinator",
+      "name": "Project Coordinator",
+      "category": "Business",
+      "searchVolume": "medium",
+      "relatedSkills": ["project-management", "communication", "time-management", "teamwork", "microsoft-office"],
+      "relatedRoles": ["business-analyst", "operations-manager", "product-manager"]
+    },
+    {
+      "slug": "human-resources",
+      "name": "Human Resources Assistant",
+      "category": "HR",
+      "searchVolume": "medium",
+      "relatedSkills": ["communication", "microsoft-office", "attention-to-detail", "teamwork", "time-management"],
+      "relatedRoles": ["customer-service", "operations-manager", "business-analyst"]
+    },
+    {
+      "slug": "accountant",
+      "name": "Accountant",
+      "category": "Finance",
+      "searchVolume": "high",
+      "relatedSkills": ["excel", "attention-to-detail", "data-analysis", "problem-solving", "microsoft-office"],
+      "relatedRoles": ["business-analyst", "data-analyst", "finance-analyst"]
+    },
+    {
+      "slug": "teaching-assistant",
+      "name": "Teaching Assistant",
+      "category": "Education",
+      "searchVolume": "medium",
+      "relatedSkills": ["communication", "teamwork", "patience", "time-management", "creativity"],
+      "relatedRoles": ["customer-service", "human-resources", "project-coordinator"]
+    },
+    {
+      "slug": "civil-engineer",
+      "name": "Civil Engineer",
+      "category": "Engineering",
+      "searchVolume": "medium",
+      "relatedSkills": ["problem-solving", "project-management", "teamwork", "attention-to-detail", "technical-drawing"],
+      "relatedRoles": ["mechanical-engineer", "electrical-engineer", "project-coordinator"]
+    },
+    {
+      "slug": "mechanical-engineer",
+      "name": "Mechanical Engineer",
+      "category": "Engineering",
+      "searchVolume": "medium",
+      "relatedSkills": ["problem-solving", "teamwork", "attention-to-detail", "cad-software", "project-management"],
+      "relatedRoles": ["civil-engineer", "electrical-engineer", "product-designer"]
+    },
+    {
+      "slug": "electrical-engineer",
+      "name": "Electrical Engineer",
+      "category": "Engineering",
+      "searchVolume": "medium",
+      "relatedSkills": ["problem-solving", "teamwork", "attention-to-detail", "circuit-design", "project-management"],
+      "relatedRoles": ["mechanical-engineer", "civil-engineer", "software-developer"]
+    },
+    {
+      "slug": "web-developer",
+      "name": "Web Developer",
+      "category": "Technology",
+      "searchVolume": "high",
+      "relatedSkills": ["html-css", "javascript", "react", "problem-solving", "teamwork"],
+      "relatedRoles": ["software-developer", "ux-designer", "graphic-designer"]
+    },
+    {
+      "slug": "ux-designer",
+      "name": "UX Designer",
+      "category": "Design",
+      "searchVolume": "medium",
+      "relatedSkills": ["figma", "user-research", "communication", "problem-solving", "creativity"],
+      "relatedRoles": ["web-developer", "graphic-designer", "product-manager"]
+    },
+    {
+      "slug": "product-manager",
+      "name": "Product Manager",
+      "category": "Business",
+      "searchVolume": "medium",
+      "relatedSkills": ["project-management", "communication", "problem-solving", "leadership", "agile"],
+      "relatedRoles": ["business-analyst", "project-coordinator", "ux-designer"]
+    },
+    {
+      "slug": "operations-manager",
+      "name": "Operations Manager",
+      "category": "Business",
+      "searchVolume": "medium",
+      "relatedSkills": ["project-management", "leadership", "communication", "problem-solving", "time-management"],
+      "relatedRoles": ["project-coordinator", "business-analyst", "sales-executive"]
+    }
+  ],
+  "metadata": {
+    "version": "1.0.0",
+    "phase": "1-mvp",
+    "totalRoles": 20,
+    "lastUpdated": "2026-02-09",
+    "categories": ["Technology", "Marketing", "Design", "Service", "Sales", "Business", "HR", "Finance", "Education", "Engineering"],
+    "targetAudience": "UK entry-level job seekers",
+    "expansionPlan": "Add 30 more roles in Phase 2 based on search query data and user behavior"
+  }
+}
