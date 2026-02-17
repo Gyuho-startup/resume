@@ -48,7 +48,12 @@ export const sampleResumeData: ResumeData = {
     {
       id: '1',
       name: 'Task Management App',
-      description: 'Built a full-stack task management application with user authentication, real-time updates, and responsive design.',
+      highlights: [
+        'Built full-stack task management application using React and Node.js, serving 100+ active users',
+        'Implemented real-time updates with Socket.io, reducing page refresh needs by 80%',
+        'Designed responsive UI with TailwindCSS, achieving 95+ Lighthouse performance score',
+        'Integrated PostgreSQL database with authentication system, maintaining 99.9% uptime'
+      ],
       technologies: ['React', 'Node.js', 'PostgreSQL', 'Socket.io', 'TailwindCSS'],
       url: 'github.com/alexjohnson/task-app',
       startDate: '2024-01',
@@ -57,7 +62,12 @@ export const sampleResumeData: ResumeData = {
     {
       id: '2',
       name: 'Weather Dashboard',
-      description: 'Created an interactive weather dashboard that fetches data from OpenWeather API and displays forecasts with charts.',
+      highlights: [
+        'Created interactive weather dashboard consuming OpenWeather API, providing forecasts for 50+ cities',
+        'Visualized weather data using Chart.js, improving data comprehension by 60%',
+        'Implemented caching strategy reducing API calls by 40% and improving load times',
+        'Achieved 4.5-star rating from 200+ users on ProductHunt'
+      ],
       technologies: ['JavaScript', 'Chart.js', 'REST API', 'HTML/CSS'],
       url: 'github.com/alexjohnson/weather-dashboard',
       startDate: '2023-10',

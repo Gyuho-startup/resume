@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import { exportResumeToPDF, downloadBlob } from '@/lib/api/export';
 import { getPassStatusFromStorage } from '@/lib/stripe/pass-utils';
+import { logExport } from '@/lib/api/resume-operations';
+import { analytics } from '@/lib/analytics';
 import PaywallModal from './PaywallModal';
 import type { Resume } from '@/types/resume';
 
@@ -10,9 +12,10 @@ interface ExportButtonProps {
   resume: Resume;
   userEmail?: string;
   userId?: string;
+  compact?: boolean;
 }
 
-export default function ExportButton({ resume, userEmail, userId }: ExportButtonProps) {
+export default function ExportButton({ resume, userEmail, userId, compact = false }: ExportButtonProps) {
   const [isExporting, setIsExporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showPaywall, setShowPaywall] = useState(false);
@@ -65,17 +68,35 @@ export default function ExportButton({ resume, userEmail, userId }: ExportButton
     setIsExporting(true);
     setError(null);
 
+    analytics.exportClick(watermark);
+
     try {
+      const exportStart = Date.now();
       const pdfBlob = await exportResumeToPDF(
         resume.templateSlug,
         resume.data,
-        watermark
+        watermark,
+        userEmail,
+        resume.sectionOrder
       );
+      const durationMs = Date.now() - exportStart;
+
+      analytics.exportSuccess(watermark, durationMs);
 
       // Download PDF
       const watermarkSuffix = watermark ? '-watermarked' : '';
       const filename = `${resume.title.replace(/\s+/g, '-').toLowerCase()}${watermarkSuffix}-cv.pdf`;
       downloadBlob(pdfBlob, filename);
+
+      // Log export to database if user is logged in and resume has ID
+      if (userId && resume.id) {
+        await logExport(
+          resume.id,
+          userId,
+          resume.templateSlug,
+          watermark
+        );
+      }
     } catch (err: any) {
       console.error('Export failed:', err);
       setError(err.message || 'Failed to export PDF');
@@ -92,6 +113,7 @@ export default function ExportButton({ resume, userEmail, userId }: ExportButton
     if (hasActivePass) {
       handleExport(false); // No watermark
     } else {
+      analytics.checkoutStart();
       setShowPaywall(true);
     }
   };
@@ -132,52 +154,99 @@ export default function ExportButton({ resume, userEmail, userId }: ExportButton
       )}
 
       {/* Export Buttons */}
-      <div className="flex gap-3">
-        {/* Free Export */}
-        <button
-          onClick={handleFreeExport}
-          disabled={isExporting}
-          className={`flex-1 px-6 py-3 rounded-lg font-semibold transition ${
-            isExporting
-              ? 'bg-slate-400 text-white cursor-not-allowed'
-              : 'bg-slate-500 text-white hover:bg-slate-600'
-          }`}
-        >
-          {isExporting ? 'Exporting...' : 'Free Export'}
-        </button>
+      <div className="flex gap-2">
+        {compact ? (
+          <>
+            {/* Compact: Free Export */}
+            <button
+              onClick={handleFreeExport}
+              disabled={isExporting}
+              className={`h-9 px-4 text-sm rounded-md font-semibold transition-colors duration-150 ${
+                isExporting
+                  ? 'border-2 border-slate-200 text-slate-400 cursor-not-allowed'
+                  : 'border-2 border-slate-300 text-slate-700 hover:bg-slate-50 hover:border-slate-400'
+              }`}
+            >
+              {isExporting ? 'Exporting...' : 'Free Export'}
+              {!isExporting && (
+                <span className="text-xs font-normal opacity-60 ml-1">(watermark)</span>
+              )}
+            </button>
 
-        {/* Paid Export / Upgrade */}
-        <button
-          onClick={handlePaidExport}
-          disabled={isExporting}
-          className={`flex-1 px-6 py-3 rounded-lg font-semibold transition ${
-            isExporting
-              ? 'bg-slate-400 text-white cursor-not-allowed'
-              : hasActivePass
-              ? 'bg-green-500 text-white hover:bg-green-600'
-              : 'bg-blue-500 text-white hover:bg-blue-600'
-          }`}
-        >
-          {isExporting
-            ? 'Exporting...'
-            : hasActivePass
-            ? 'Export Premium'
-            : 'Upgrade to Remove Watermark'}
-        </button>
+            {/* Compact: Paid Export / Upgrade */}
+            <button
+              onClick={handlePaidExport}
+              disabled={isExporting}
+              className={`h-9 px-4 text-sm rounded-md font-semibold transition-colors duration-150 ${
+                isExporting
+                  ? 'bg-slate-300 text-slate-500 cursor-not-allowed'
+                  : hasActivePass
+                  ? 'bg-green-500 text-white hover:bg-green-600'
+                  : 'bg-blue-600 text-white hover:bg-blue-700'
+              }`}
+            >
+              {isExporting
+                ? 'Exporting...'
+                : hasActivePass
+                ? 'Export Premium'
+                : 'Remove Watermark'}
+              {!isExporting && !hasActivePass && (
+                <span className="text-xs font-normal opacity-80 ml-1">· £2.99</span>
+              )}
+            </button>
+          </>
+        ) : (
+          <>
+            {/* Full: Free Export */}
+            <button
+              onClick={handleFreeExport}
+              disabled={isExporting}
+              className={`flex-1 px-6 py-3 rounded-lg font-semibold transition ${
+                isExporting
+                  ? 'bg-slate-400 text-white cursor-not-allowed'
+                  : 'bg-slate-500 text-white hover:bg-slate-600'
+              }`}
+            >
+              <div className="flex flex-col items-center">
+                <span>{isExporting ? 'Exporting...' : 'Free Export'}</span>
+                {!isExporting && (
+                  <span className="text-xs font-normal opacity-90 mt-1">
+                    (includes watermark)
+                  </span>
+                )}
+              </div>
+            </button>
+
+            {/* Full: Paid Export / Upgrade */}
+            <button
+              onClick={handlePaidExport}
+              disabled={isExporting}
+              className={`flex-1 px-6 py-3 rounded-lg font-semibold transition ${
+                isExporting
+                  ? 'bg-slate-400 text-white cursor-not-allowed'
+                  : hasActivePass
+                  ? 'bg-green-500 text-white hover:bg-green-600'
+                  : 'bg-blue-500 text-white hover:bg-blue-600'
+              }`}
+            >
+              <div className="flex flex-col items-center">
+                <span>
+                  {isExporting
+                    ? 'Exporting...'
+                    : hasActivePass
+                    ? 'Export Premium'
+                    : 'Upgrade to Remove Watermark'}
+                </span>
+                {!isExporting && !hasActivePass && (
+                  <span className="text-xs font-normal opacity-90 mt-1">
+                    (no watermark, unlimited 24h · £2.99)
+                  </span>
+                )}
+              </div>
+            </button>
+          </>
+        )}
       </div>
-
-      {/* Help Text */}
-      {!hasActivePass && (
-        <div className="text-xs text-slate-500 space-y-1">
-          <p>
-            <strong>Free:</strong> Includes watermark
-          </p>
-          <p>
-            <strong>Premium:</strong> No watermark, unlimited exports for 24h
-            (£2.99)
-          </p>
-        </div>
-      )}
 
       {/* Error Message */}
       {error && (

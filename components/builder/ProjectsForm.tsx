@@ -82,7 +82,20 @@ export default function ProjectsForm({
   };
 
   const onSubmit = (data: ProjectFormData) => {
-    onSave(data.projects);
+    // Convert description to highlights array (split by newlines)
+    const projectsWithHighlights = data.projects.map(project => ({
+      ...project,
+      highlights: project.description
+        ? project.description
+            .split('\n')
+            .map(line => line.trim())
+            .filter(line => line.length > 0)
+        : [],
+      // Remove description field (old schema)
+      description: undefined
+    }));
+
+    onSave(projectsWithHighlights as any);
     onNext();
   };
 
@@ -130,16 +143,16 @@ export default function ProjectsForm({
                 )}
               </div>
 
-              {/* Description */}
+              {/* Project Highlights */}
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Description <span className="text-red-500">*</span>
+                  Project Highlights <span className="text-red-500">*</span>
                 </label>
                 <textarea
                   {...register(`projects.${index}.description`)}
-                  rows={4}
-                  placeholder="Describe what the project does, your role, and the impact. E.g., Built a full-stack e-commerce platform with product catalog, shopping cart, and payment integration. Implemented responsive UI with React and backend APIs with Node.js."
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  rows={5}
+                  placeholder="Enter 3-4 bullet points (one per line):&#10;Built React platform serving 200+ users, increasing engagement by 35%&#10;Implemented authentication system reducing unauthorized access by 95%&#10;Optimized performance improving load time from 3s to 800ms&#10;Deployed with CI/CD achieving 95+ Lighthouse score"
+                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-mono text-sm"
                 />
                 {errors.projects?.[index]?.description && (
                   <p className="text-sm text-red-600 mt-1">
@@ -147,7 +160,7 @@ export default function ProjectsForm({
                   </p>
                 )}
                 <p className="text-xs text-slate-500 mt-1">
-                  Minimum 20 characters
+                  Enter each bullet point on a new line. Follow: Action + Tool + Result + Metric
                 </p>
               </div>
 

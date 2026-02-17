@@ -4,6 +4,8 @@ import { useState } from 'react';
 import TemplateRenderer from '@/components/templates/TemplateRenderer';
 import { sampleResumeData } from '@/lib/sample-data';
 import { TEMPLATES } from '@/lib/templates';
+import Header from '@/components/layout/Header';
+import { DEFAULT_SECTION_ORDER } from '@/lib/section-order';
 import type { TemplateSlug } from '@/types/resume';
 
 export default function PreviewPage() {
@@ -11,17 +13,20 @@ export default function PreviewPage() {
   const [showWatermark, setShowWatermark] = useState(true);
 
   return (
-    <div className="min-h-screen bg-slate-100 py-8">
-      <div className="max-w-7xl mx-auto px-4">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-slate-900 mb-2">
-            Template Preview
-          </h1>
-          <p className="text-slate-600">
-            Testing Phase 1 - Template Engine
-          </p>
-        </div>
+    <div className="min-h-screen bg-slate-100">
+      <Header />
+
+      <div className="py-8">
+        <div className="max-w-7xl mx-auto px-4">
+          {/* Page Title */}
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-slate-900 mb-2">
+              Template Preview
+            </h1>
+            <p className="text-slate-600">
+              Preview all available CV templates
+            </p>
+          </div>
 
         {/* Controls */}
         <div className="bg-white rounded-lg shadow p-6 mb-8">
@@ -80,15 +85,11 @@ export default function PreviewPage() {
           <TemplateRenderer
             templateSlug={selectedTemplate}
             data={sampleResumeData}
+            sectionOrder={DEFAULT_SECTION_ORDER}
             watermark={showWatermark}
           />
         </div>
 
-        {/* Info */}
-        <div className="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <p className="text-sm text-blue-900">
-            <strong>Phase 1 Progress:</strong> Template Engine is working! Next steps: Builder UI, LocalStorage autosave, PDF export.
-          </p>
         </div>
       </div>
     </div>

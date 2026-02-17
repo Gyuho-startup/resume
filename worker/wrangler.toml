@@ -1,9 +1,10 @@
 # Cloudflare Worker Configuration for PDF Renderer
 # Deploy: wrangler deploy
 
-name = "uk-resume-builder-pdf-renderer"
+name = "pdf-renderer"
 main = "src/index.ts"
-compatibility_date = "2024-01-01"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
 
 # Browser Rendering binding
 # Enables headless Chrome for PDF generation
@@ -15,7 +16,8 @@ browser = { binding = "BROWSER" }
 
 [vars]
 # Non-secret environment variables
-ALLOWED_ORIGINS = "http://localhost:3000,https://yourdomain.com"
+ALLOWED_ORIGINS = "http://localhost:3001,https://yourdomain.com"
+# SENTRY_DSN = "https://xxx@oXXX.ingest.sentry.io/XXX"  # Set via wrangler secret put SENTRY_DSN
 
 # Rate limiting (optional)
 # [rate_limit]

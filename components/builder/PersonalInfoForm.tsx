@@ -1,34 +1,62 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { personalSchema } from '@/lib/validation/resume-schema';
 import type { ResumePersonal } from '@/types/resume';
 
+const SUMMARY_MAX_CHARS = 500;
+
 interface PersonalInfoFormProps {
   initialData: ResumePersonal;
+  summary?: string;
   onSave: (data: ResumePersonal) => void;
+  onSummarySave?: (summary: string) => void;
   onNext: () => void;
 }
 
 export default function PersonalInfoForm({
   initialData,
+  summary,
   onSave,
+  onSummarySave,
   onNext,
 }: PersonalInfoFormProps) {
+  const [summaryText, setSummaryText] = useState<string>(summary ?? '');
+
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors },
   } = useForm<ResumePersonal>({
     resolver: zodResolver(personalSchema),
     defaultValues: initialData,
   });
 
-  const onSubmit = (data: ResumePersonal) => {
-    onSave(data);
+  // 입력 즉시 Live Preview에 반영
+  const watchedValues = watch();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    onSave(watchedValues);
+  // JSON.stringify로 값 변경 시에만 실행
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [JSON.stringify(watchedValues)]);
+
+  // Summary 변경 즉시 Live Preview에 반영
+  useEffect(() => {
+    if (onSummarySave) {
+      onSummarySave(summaryText);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [summaryText]);
+
+  const onSubmit = (_data: ResumePersonal) => {
     onNext();
   };
+
+  const charsUsed = summaryText.length;
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -143,6 +171,40 @@ export default function PersonalInfoForm({
           {errors.portfolio && (
             <p className="text-sm text-red-600 mt-1">{errors.portfolio.message}</p>
           )}
+        </div>
+
+        {/* Professional Summary (Optional) */}
+        <div className="md:col-span-2">
+          <label
+            htmlFor="professional-summary"
+            className="block text-sm font-medium text-slate-700 mb-2"
+          >
+            Professional Summary (Optional)
+          </label>
+          <textarea
+            id="professional-summary"
+            value={summaryText}
+            onChange={(e) => {
+              if (e.target.value.length <= SUMMARY_MAX_CHARS) {
+                setSummaryText(e.target.value);
+              }
+            }}
+            rows={4}
+            placeholder="e.g., Recent Computer Science graduate from the University of Manchester with strong skills in Python and data analysis. Seeking a software engineering role where I can apply my academic knowledge and internship experience."
+            className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+          />
+          <div className="flex items-start justify-between mt-1 gap-4">
+            <p className="text-xs text-slate-500">
+              2-3 sentences summarising your background and what you&apos;re looking for. Appears at the top of your CV.
+            </p>
+            <p
+              className={`text-xs whitespace-nowrap flex-shrink-0 ${
+                charsUsed >= SUMMARY_MAX_CHARS - 50 ? 'text-amber-600' : 'text-slate-400'
+              }`}
+            >
+              {charsUsed} / {SUMMARY_MAX_CHARS}
+            </p>
+          </div>
         </div>
       </div>
 

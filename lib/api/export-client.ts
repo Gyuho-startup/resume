@@ -33,19 +33,24 @@ export async function generatePDFFromHTML(
       windowWidth: 794,
     });
 
+    if (canvas.width === 0 || canvas.height === 0) {
+      throw new Error('Failed to capture preview for PDF generation.');
+    }
+
     // Calculate PDF dimensions (A4 size)
     const imgWidth = 210; // A4 width in mm
     const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
     // Create PDF
     const pdf = new jsPDF({
-      orientation: imgHeight > imgWidth ? 'portrait' : 'landscape',
+      orientation: 'portrait',
       unit: 'mm',
       format: 'a4',
     });
 
-    const imgData = canvas.toDataURL('image/png');
-    pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+    // Use JPEG to avoid jsPDF v4 PNG header parsing issues
+    const imgData = canvas.toDataURL('image/jpeg', 0.95);
+    pdf.addImage(imgData, 'JPEG', 0, 0, imgWidth, imgHeight);
 
     // Return as blob
     return pdf.output('blob');

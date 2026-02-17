@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { stripe } from '@/lib/stripe/config';
 import { getActivePass } from '@/lib/stripe/pass-utils';
 import StorePassClient from '@/components/purchase/StorePassClient';
+import Header from '@/components/layout/Header';
 import Link from 'next/link';
 
 interface SearchParams {
@@ -38,19 +39,33 @@ async function SuccessContent({ searchParams }: { searchParams: Promise<SearchPa
     redirect('/builder');
   }
 
-  // Get active pass details
-  const activePass = await getActivePass(
+  // Try to get active pass from database
+  let activePass = await getActivePass(
     userId ? { userId } : { email }
   );
 
+  // If webhook hasn't been processed yet, create temporary pass info from session
+  let passEndAt: string;
   if (!activePass) {
-    redirect('/builder');
+    // Webhook hasn't processed yet - use session data
+    // Pass duration: 24 hours from now
+    const now = new Date();
+    const endDate = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+    passEndAt = endDate.toISOString();
+
+    console.log('Webhook not processed yet, using session data for display');
+  } else {
+    passEndAt = activePass.passEndAt;
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-green-50 to-white flex items-center justify-center p-6">
+    <div className="min-h-screen bg-gradient-to-b from-green-50 to-white">
+      <Header />
+
       {/* Store pass in localStorage for guest users */}
-      <StorePassClient expiresAt={activePass.passEndAt} />
+      <StorePassClient expiresAt={passEndAt} />
+
+      <div className="flex items-center justify-center p-6 mt-8">
 
       <div className="max-w-2xl w-full">
         <div className="bg-white rounded-2xl shadow-xl p-8 md:p-12 text-center">
@@ -92,7 +107,7 @@ async function SuccessContent({ searchParams }: { searchParams: Promise<SearchPa
               <div className="flex justify-between items-center">
                 <span className="text-sm font-medium text-slate-700">Expires:</span>
                 <span className="text-sm text-slate-900 font-medium">
-                  {new Date(activePass.passEndAt).toLocaleString('en-GB', {
+                  {new Date(passEndAt).toLocaleString('en-GB', {
                     day: 'numeric',
                     month: 'short',
                     year: 'numeric',
@@ -165,6 +180,7 @@ async function SuccessContent({ searchParams }: { searchParams: Promise<SearchPa
             </p>
           </div>
         )}
+      </div>
       </div>
     </div>
   );

@@ -1,4 +1,4 @@
-import type { ResumeData, TemplateSlug } from '@/types/resume';
+import type { ResumeData, ResumeSectionKey, TemplateSlug } from '@/types/resume';
 import { generatePDFFromHTML } from './export-client';
 
 /**
@@ -7,7 +7,9 @@ import { generatePDFFromHTML } from './export-client';
 export async function exportResumeToPDF(
   templateSlug: TemplateSlug,
   resumeData: ResumeData,
-  watermark: boolean = true
+  watermark: boolean = true,
+  email?: string, // Required when watermark=false and user is not logged in (guest pass)
+  sectionOrder?: ResumeSectionKey[]
 ): Promise<Blob> {
   const response = await fetch('/api/export', {
     method: 'POST',
@@ -18,32 +20,34 @@ export async function exportResumeToPDF(
       templateSlug,
       resumeData,
       watermark,
+      ...(email && { email }),
+      ...(sectionOrder && { sectionOrder }),
     }),
   });
 
+  const contentType = response.headers.get('content-type') ?? '';
+  const isJson = contentType.includes('application/json');
+
+  // Server returned an error — propagate the message, do NOT silently fallback
   if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || 'Failed to export PDF');
+    if (isJson) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || `Export failed (${response.status})`);
+    }
+    throw new Error(`Export failed (${response.status})`);
   }
 
-  // Check if response is JSON (renderer not configured)
-  const contentType = response.headers.get('content-type');
-  if (contentType && contentType.includes('application/json')) {
-    // Fallback to client-side PDF generation
-    console.log('PDF Renderer not configured, using client-side generation');
-
-    // Find the preview element (it should be rendered on the page)
+  // Server returned OK JSON → PDF renderer not configured (dev mode fallback)
+  if (isJson) {
+    console.log('PDF Renderer not configured. Using client-side fallback.');
     const previewElement = document.querySelector('[data-pdf-preview]') as HTMLElement;
-
     if (!previewElement) {
       throw new Error('Preview element not found. Cannot generate PDF.');
     }
-
-    // Generate PDF from the preview HTML
     return await generatePDFFromHTML('pdf-preview-container', 'cv.pdf');
   }
 
-  // Return PDF blob from server
+  // Server returned PDF bytes
   return await response.blob();
 }
 

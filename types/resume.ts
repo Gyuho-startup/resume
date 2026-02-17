@@ -36,7 +36,7 @@ export interface ResumeExperience {
 export interface ResumeProject {
   id: string;
   name: string;
-  description: string;
+  highlights: string[]; // CHANGED: was "description: string" - now array of bullet points for HR quality
   technologies: string[];
   url?: string;
   startDate?: string; // YYYY-MM format
@@ -57,6 +57,15 @@ export interface ResumeCertification {
   url?: string;
 }
 
+// Sections that can be reordered by the user (personal is always the header)
+export type ResumeSectionKey =
+  | 'summary'
+  | 'education'
+  | 'experience'
+  | 'projects'
+  | 'skills'
+  | 'certifications';
+
 export interface ResumeData {
   personal: ResumePersonal;
   education: ResumeEducation[];
@@ -64,7 +73,8 @@ export interface ResumeData {
   projects: ResumeProject[];
   skills: ResumeSkills;
   certifications?: ResumeCertification[];
-  summary?: string; // Optional professional summary
+  summary?: string;
+  sectionOrder?: ResumeSectionKey[]; // Stored in JSONB for persistence
 }
 
 // Template selection
@@ -73,7 +83,22 @@ export type TemplateSlug =
   | 'projects-first'
   | 'skills-emphasis'
   | 'minimal-classic'
-  | 'modern-ats-safe';
+  | 'modern-ats-safe'
+  | 'navy-executive'
+  | 'two-tone-header'
+  | 'green-accent'
+  | 'burgundy-classic'
+  | 'compact-dense'
+  | 'centered-formal'
+  | 'timeline-style'
+  | 'tech-focused'
+  | 'academic-cv'
+  | 'warm-professional'
+  | 'blue-stripe'
+  | 'sharp-geometric'
+  | 'clean-serif'
+  | 'entry-level-friendly'
+  | 'creative-minimal';
 
 export interface Template {
   id: string;
@@ -92,6 +117,7 @@ export interface Resume {
   roleSlug?: string;
   country: string;
   templateSlug: TemplateSlug;
+  sectionOrder: ResumeSectionKey[]; // User-defined section order
   data: ResumeData;
   createdAt?: string;
   updatedAt?: string;

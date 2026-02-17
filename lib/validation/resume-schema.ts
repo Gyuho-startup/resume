@@ -29,7 +29,7 @@ export const experienceSchema = z.object({
   position: z.string().min(2, 'Position required').max(200),
   location: z.string().max(200).optional(),
   startDate: z.string().regex(/^\d{4}-\d{2}$/, 'Format: YYYY-MM'),
-  endDate: z.string().regex(/^\d{4}-\d{2}$|^Present$/, 'Format: YYYY-MM or "Present"').optional(),
+  endDate: z.string().regex(/^\d{4}-\d{2}$|^Present$|^$/, 'Format: YYYY-MM or "Present"').optional(),
   current: z.boolean(),
   responsibilities: z.array(z.string().min(10, 'Too short').max(500)).min(1, 'Add at least one responsibility'),
 });

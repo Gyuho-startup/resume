@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
+import Script from 'next/script';
+import { AuthProvider } from '@/lib/contexts/AuthContext';
 import './globals.css';
 
 const inter = Inter({
@@ -20,8 +22,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en-GB">
-      <body className={`${inter.variable} antialiased`}>
-        {children}
+      <body className={`${inter.variable} antialiased`} suppressHydrationWarning>
+        <AuthProvider>{children}</AuthProvider>
+        <Script
+          data-domain={process.env.NEXT_PUBLIC_PLAUSIBLE_DOMAIN || 'cvbuilder.co.uk'}
+          src="https://plausible.io/js/script.js"
+          strategy="afterInteractive"
+        />
       </body>
     </html>
   );

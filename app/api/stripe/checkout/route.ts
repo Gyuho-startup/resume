@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { stripe, EXPORT_PASS_CONFIG } from '@/lib/stripe/config';
 import { createRouteClient } from '@/lib/supabase/route-client';
+import { captureStripeError } from '@/lib/sentry';
 
 // Create Stripe Checkout Session for Export Pass purchase
 
@@ -81,6 +82,7 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error('Stripe checkout error:', error);
+    captureStripeError(error, { status: 'checkout_creation_failed' });
     return NextResponse.json(
       { error: 'Failed to create checkout session' },
       { status: 500 }

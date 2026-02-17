@@ -1,10 +1,11 @@
 'use client';
 
-import { useForm, useFieldArray } from 'react-hook-form';
+import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { educationSchema } from '@/lib/validation/resume-schema';
 import type { ResumeEducation } from '@/types/resume';
+import UniversityAutocomplete from './UniversityAutocomplete';
 
 const educationListSchema = z.object({
   education: z.array(educationSchema).min(1, 'Add at least one education entry'),
@@ -43,7 +44,7 @@ export default function EducationForm({
                 degree: '',
                 field: '',
                 startDate: '',
-                endDate: '',
+                endDate: 'Present',
                 grade: '',
                 achievements: [],
               },
@@ -82,15 +83,21 @@ export default function EducationForm({
 
           <div className="grid md:grid-cols-2 gap-4">
             {/* Institution */}
-            <div className="md:col-span-2">
+            <div className="md:col-span-2 relative z-10">
               <label className="block text-sm font-medium text-slate-700 mb-2">
                 Institution / University <span className="text-red-500">*</span>
               </label>
-              <input
-                type="text"
-                {...register(`education.${index}.institution`)}
-                placeholder="e.g., University of Manchester"
-                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              <Controller
+                control={control}
+                name={`education.${index}.institution`}
+                render={({ field }) => (
+                  <UniversityAutocomplete
+                    value={field.value ?? ''}
+                    onChange={field.onChange}
+                    onBlur={field.onBlur}
+                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                )}
               />
               {errors.education?.[index]?.institution && (
                 <p className="text-sm text-red-600 mt-1">
@@ -193,7 +200,7 @@ export default function EducationForm({
             degree: '',
             field: '',
             startDate: '',
-            endDate: '',
+            endDate: 'Present',
             grade: '',
             achievements: [],
           })

@@ -46,9 +46,9 @@ export default function ExperienceForm({
                 position: '',
                 location: '',
                 startDate: '',
-                endDate: '',
+                endDate: 'Present',
                 current: false,
-                responsibilities: [''],
+                responsibilities: [],
               },
             ],
     },
@@ -194,7 +194,15 @@ export default function ExperienceForm({
                 <label className="flex items-center gap-2">
                   <input
                     type="checkbox"
-                    {...register(`experience.${index}.current`)}
+                    {...register(`experience.${index}.current`, {
+                      onChange: (e) => {
+                        if (e.target.checked) {
+                          setValue(`experience.${index}.endDate`, 'Present');
+                        } else {
+                          setValue(`experience.${index}.endDate`, '');
+                        }
+                      },
+                    })}
                     className="w-4 h-4 text-blue-500 border-slate-300 rounded focus:ring-2 focus:ring-blue-500"
                   />
                   <span className="text-sm font-medium text-slate-700">
@@ -308,9 +316,9 @@ export default function ExperienceForm({
             position: '',
             location: '',
             startDate: '',
-            endDate: '',
+            endDate: 'Present',
             current: false,
-            responsibilities: [''],
+            responsibilities: [],
           })
         }
         className="w-full py-3 border-2 border-dashed border-slate-300 rounded-lg text-slate-600 hover:border-blue-500 hover:text-blue-500 transition font-medium"
@@ -320,10 +328,29 @@ export default function ExperienceForm({
 
       {/* Error Summary */}
       {errors.experience && (
-        <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-          <p className="text-sm text-red-600">
-            Please fix the errors above before continuing.
-          </p>
+        <div className="p-4 bg-red-50 border border-red-200 rounded-lg space-y-1">
+          <p className="text-sm font-semibold text-red-700">Please fix the following errors:</p>
+          {Array.isArray(errors.experience) && errors.experience.map((entryErrors, i) => {
+            if (!entryErrors) return null;
+            const errs: string[] = [];
+            if (entryErrors.company?.message) errs.push(`Entry ${i + 1} — Company: ${entryErrors.company.message}`);
+            if (entryErrors.position?.message) errs.push(`Entry ${i + 1} — Position: ${entryErrors.position.message}`);
+            if (entryErrors.startDate?.message) errs.push(`Entry ${i + 1} — Start Date: ${entryErrors.startDate.message}`);
+            if (entryErrors.endDate?.message) errs.push(`Entry ${i + 1} — End Date: ${entryErrors.endDate.message}`);
+            if (entryErrors.responsibilities?.message) errs.push(`Entry ${i + 1} — Responsibilities: ${entryErrors.responsibilities.message}`);
+            // Item-level responsibility errors
+            if (Array.isArray(entryErrors.responsibilities)) {
+              (entryErrors.responsibilities as any[]).forEach((rErr: any, ri: number) => {
+                if (rErr?.message) errs.push(`Entry ${i + 1} — Responsibility ${ri + 1}: ${rErr.message}`);
+              });
+            }
+            return errs.map((msg) => (
+              <p key={msg} className="text-sm text-red-600">• {msg}</p>
+            ));
+          })}
+          {(errors.experience as any)?.message && (
+            <p className="text-sm text-red-600">• {(errors.experience as any).message}</p>
+          )}
         </div>
       )}
 

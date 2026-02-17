@@ -1,12 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
-import type { ResumeData, TemplateSlug } from '@/types/resume';
-
-export const runtime = 'edge'; // Use Edge runtime for better performance
+import type { ResumeData, ResumeSectionKey, TemplateSlug } from '@/types/resume';
+import { createClient } from '@/lib/supabase/server';
+import { createRouteClient } from '@/lib/supabase/route-client';
+import { DEFAULT_SECTION_ORDER } from '@/lib/section-order';
+import { renderTemplateToFullHtml } from '@/lib/templates/html-renderer';
+import { captureExportError, captureRendererError, trackExportDuration, trackExportResult } from '@/lib/sentry';
 
 interface ExportRequest {
   templateSlug: TemplateSlug;
   resumeData: ResumeData;
   watermark: boolean;
+  email?: string; // For guest Export Pass holders
+  sectionOrder?: ResumeSectionKey[]; // User-defined section order
 }
 
 /**
@@ -16,13 +21,14 @@ interface ExportRequest {
  *
  * Flow:
  * 1. Validate request body
- * 2. Call Cloudflare Worker (PDF Renderer)
- * 3. Return PDF bytes to client
+ * 2. Server-side verify Export Pass (never trust client watermark=false claim)
+ * 3. Call Cloudflare Worker (PDF Renderer)
+ * 4. Return PDF bytes to client
  */
 export async function POST(request: NextRequest) {
   try {
     const body: ExportRequest = await request.json();
-    const { templateSlug, resumeData, watermark } = body;
+    const { templateSlug, resumeData, watermark, email, sectionOrder } = body;
 
     // Validate required fields
     if (!templateSlug || !resumeData) {
@@ -32,9 +38,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // TODO: Check if user has active Export Pass (for watermark=false)
-    // For now, free users always get watermark
-    const actualWatermark = watermark !== false; // Force watermark for MVP
+    // Server-side Export Pass verification — never trust the client's watermark flag
+    // Default to watermark=true; only skip watermark if DB confirms a valid pass
+    let actualWatermark = true;
+    if (watermark === false) {
+      actualWatermark = !(await hasValidExportPass(email));
+    }
 
     // Call Cloudflare Worker to generate PDF
     const pdfRendererUrl = process.env.PDF_RENDERER_URL;
@@ -50,7 +59,19 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Call PDF renderer
+    // Render the template to a full HTML document (no React SSR — pure string generation
+    // to avoid Next.js 15 react-dom/server restrictions in route handlers)
+    const resolvedSectionOrder = sectionOrder ?? DEFAULT_SECTION_ORDER;
+    const fullHtml = renderTemplateToFullHtml(
+      templateSlug,
+      resumeData,
+      resolvedSectionOrder,
+      actualWatermark
+    );
+
+    // Call PDF renderer — send the pre-rendered HTML directly; the worker no
+    // longer needs template or resume data (the HTML already contains everything)
+    const renderStart = Date.now();
     const response = await fetch(`${pdfRendererUrl}/render/pdf`, {
       method: 'POST',
       headers: {
@@ -58,18 +79,34 @@ export async function POST(request: NextRequest) {
         'Authorization': `Bearer ${pdfRendererToken}`,
       },
       body: JSON.stringify({
-        templateSlug,
-        resumeData,
+        html: fullHtml,
         watermark: actualWatermark,
       }),
     });
 
     if (!response.ok) {
-      throw new Error(`PDF Renderer failed: ${response.statusText}`);
+      const durationMs = Date.now() - renderStart;
+      let workerError = response.statusText;
+      try {
+        const errBody = await response.json();
+        workerError = errBody.message || errBody.error || response.statusText;
+      } catch { /* non-JSON body */ }
+      captureRendererError(new Error(`PDF Renderer failed (${response.status}): ${workerError}`), {
+        templateId: templateSlug,
+        watermark: actualWatermark,
+        workerStatus: response.status,
+        durationMs,
+      });
+      trackExportDuration(durationMs, false);
+      trackExportResult(false, !email);
+      throw new Error(`PDF Renderer failed (${response.status}): ${workerError}`);
     }
 
     // Return PDF bytes
     const pdfBytes = await response.arrayBuffer();
+    const durationMs = Date.now() - renderStart;
+    trackExportDuration(durationMs, true);
+    trackExportResult(true, !email);
 
     return new NextResponse(pdfBytes, {
       status: 200,
@@ -80,9 +117,63 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error('Export error:', error);
+    captureExportError(error, {
+      templateId: 'unknown',
+      watermark: true,
+      isGuest: true,
+    });
+    trackExportResult(false, true);
     return NextResponse.json(
       { error: 'Failed to generate PDF' },
       { status: 500 }
     );
+  }
+}
+
+/**
+ * Server-side check: does this request have a valid paid Export Pass?
+ * Checks by authenticated user_id first, then by email for guest purchases.
+ * Fails safe — returns false on any error so watermark is always applied.
+ */
+async function hasValidExportPass(email?: string): Promise<boolean> {
+  try {
+    const now = new Date().toISOString();
+    const db = createRouteClient();
+
+    // Check authenticated user session
+    const authClient = await createClient();
+    const { data: { user } } = await authClient.auth.getUser();
+
+    if (user) {
+      const { data } = await db
+        .from('purchases')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('status', 'paid')
+        .lte('pass_start_at', now)
+        .gte('pass_end_at', now)
+        .limit(1)
+        .single();
+      if (data) return true;
+    }
+
+    // Check by email for guest pass holders
+    if (email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      const { data } = await db
+        .from('purchases')
+        .select('id')
+        .eq('email', email)
+        .eq('status', 'paid')
+        .lte('pass_start_at', now)
+        .gte('pass_end_at', now)
+        .limit(1)
+        .single();
+      if (data) return true;
+    }
+
+    return false;
+  } catch {
+    // Fail safe: if DB check errors, force watermark on
+    return false;
   }
 }

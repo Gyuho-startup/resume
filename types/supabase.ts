@@ -34,6 +34,7 @@ export interface Database {
           title: string;
           role_slug: string | null;
           country: string;
+          template_slug: string;
           data: Json;
           created_at: string;
           updated_at: string;
@@ -70,6 +71,28 @@ export interface Database {
         };
         Insert: Omit<Database['public']['Tables']['purchases']['Row'], 'id' | 'created_at' | 'updated_at'>;
         Update: Partial<Database['public']['Tables']['purchases']['Insert']>;
+      };
+      conversation_sessions: {
+        Row: {
+          id: string;
+          user_id: string | null;
+          guest_identifier: string | null;
+          created_at: string;
+          started_at: string;
+          expires_at: string;
+          payment_status: 'free' | 'gated' | 'paid';
+          stripe_checkout_session_id: string | null;
+          stripe_payment_intent_id: string | null;
+          amount_paid: number | null;
+          conversation_data: Json;
+          resume_data: Json | null;
+          deleted_at: string | null;
+          deletion_reason: string | null;
+          user_agent: string | null;
+          ip_address: string | null;
+        };
+        Insert: Omit<Database['public']['Tables']['conversation_sessions']['Row'], 'id' | 'created_at'>;
+        Update: Partial<Database['public']['Tables']['conversation_sessions']['Insert']>;
       };
     };
     Functions: {

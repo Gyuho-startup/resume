@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { stripe, STRIPE_WEBHOOK_SECRET } from '@/lib/stripe/config';
 import { createPurchaseRecord } from '@/lib/stripe/pass-utils';
 import Stripe from 'stripe';
+import { captureStripeError, trackCheckoutResult } from '@/lib/sentry';
 
 // Stripe Webhook Handler
 // Handles checkout.session.completed event to create purchase records
@@ -84,10 +85,11 @@ export async function POST(request: NextRequest) {
 
         console.log('Purchase created successfully:', {
           purchaseId: purchase.id,
-          email,
-          userId,
-          sessionId: session.id,
+          // Do not log email (PII)
+          hasUserId: !!userId,
+          sessionId: session.id.substring(0, 20) + '...',
         });
+        trackCheckoutResult(true);
 
         break;
       }
@@ -106,6 +108,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ received: true });
   } catch (error) {
     console.error('Error processing webhook:', error);
+    captureStripeError(error, { status: 'webhook_processing_failed' });
+    trackCheckoutResult(false);
     return NextResponse.json(
       { error: 'Webhook processing failed' },
       { status: 500 }

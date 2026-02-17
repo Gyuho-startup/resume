@@ -1,7 +1,9 @@
-import type { ResumeData } from '@/types/resume';
+import React from 'react';
+import type { ResumeData, ResumeSectionKey } from '@/types/resume';
 
 interface TemplateProps {
   data: ResumeData;
+  sectionOrder: ResumeSectionKey[];
   watermark?: boolean;
 }
 
@@ -10,52 +12,20 @@ interface TemplateProps {
  * ATS-friendly: One-column, no tables, no icons, standard headings
  * Ideal for recent graduates highlighting academic achievements
  */
-export default function EducationFirstTemplate({ data, watermark = false }: TemplateProps) {
+export default function EducationFirstTemplate({ data, sectionOrder, watermark = false }: TemplateProps) {
   const { personal, education, experience, projects, skills, certifications, summary } = data;
 
-  return (
-    <div className="max-w-[210mm] mx-auto bg-white p-8 shadow-lg relative print:shadow-none">
-      {/* Watermark overlay */}
-      {watermark && (
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-10 print:opacity-20">
-          <div className="text-8xl font-bold text-slate-400 rotate-[-45deg] select-none">
-            FREE EXPORT
-          </div>
-        </div>
-      )}
+  const sectionMap: Record<ResumeSectionKey, React.ReactNode> = {
+    summary: summary ? (
+      <section className="mb-6">
+        <h2 className="text-xl font-bold text-slate-900 mb-3 border-b border-slate-300 pb-1">
+          Professional Summary
+        </h2>
+        <p className="text-sm text-slate-700 leading-relaxed">{summary}</p>
+      </section>
+    ) : null,
 
-      {/* Personal Information (Header) */}
-      <header className="mb-6 border-b-2 border-slate-900 pb-4">
-        <h1 className="text-3xl font-bold text-slate-900 mb-2">
-          {personal.name}
-        </h1>
-        <div className="text-sm text-slate-700 space-y-1">
-          <div className="flex flex-wrap gap-x-4 gap-y-1">
-            <span>{personal.email}</span>
-            <span>{personal.phone}</span>
-            <span>{personal.city}</span>
-          </div>
-          {(personal.linkedin || personal.github || personal.portfolio) && (
-            <div className="flex flex-wrap gap-x-4 gap-y-1">
-              {personal.linkedin && <span>{personal.linkedin}</span>}
-              {personal.github && <span>{personal.github}</span>}
-              {personal.portfolio && <span>{personal.portfolio}</span>}
-            </div>
-          )}
-        </div>
-      </header>
-
-      {/* Professional Summary (Optional) */}
-      {summary && (
-        <section className="mb-6">
-          <h2 className="text-xl font-bold text-slate-900 mb-3 border-b border-slate-300 pb-1">
-            Professional Summary
-          </h2>
-          <p className="text-sm text-slate-700 leading-relaxed">{summary}</p>
-        </section>
-      )}
-
-      {/* Education Section (First - main focus) */}
+    education: education.length > 0 ? (
       <section className="mb-6">
         <h2 className="text-xl font-bold text-slate-900 mb-3 border-b border-slate-300 pb-1">
           Education
@@ -89,8 +59,9 @@ export default function EducationFirstTemplate({ data, watermark = false }: Temp
           ))}
         </div>
       </section>
+    ) : null,
 
-      {/* Skills Section */}
+    skills: (skills.technical.length > 0 || skills.soft.length > 0 || (skills.languages && skills.languages.length > 0)) ? (
       <section className="mb-6">
         <h2 className="text-xl font-bold text-slate-900 mb-3 border-b border-slate-300 pb-1">
           Skills
@@ -122,104 +93,149 @@ export default function EducationFirstTemplate({ data, watermark = false }: Temp
           )}
         </div>
       </section>
+    ) : null,
 
-      {/* Projects Section */}
-      {projects.length > 0 && (
-        <section className="mb-6">
-          <h2 className="text-xl font-bold text-slate-900 mb-3 border-b border-slate-300 pb-1">
-            Projects
-          </h2>
-          <div className="space-y-4">
-            {projects.map((project) => (
-              <div key={project.id}>
-                <div className="flex justify-between items-baseline mb-1">
-                  <h3 className="text-base font-semibold text-slate-900">
-                    {project.name}
-                  </h3>
-                  {project.startDate && (
-                    <span className="text-sm text-slate-600 whitespace-nowrap ml-4">
-                      {project.startDate}
-                      {project.endDate && ` – ${project.endDate}`}
-                    </span>
-                  )}
-                </div>
-                <p className="text-sm text-slate-700 mb-2">{project.description}</p>
-                <div className="text-sm text-slate-600">
-                  <span className="font-medium">Technologies: </span>
-                  {project.technologies.join(', ')}
-                </div>
-                {project.url && (
-                  <div className="text-sm text-slate-600 mt-1">
-                    <span className="font-medium">URL: </span>
-                    {project.url}
-                  </div>
+    projects: projects.length > 0 ? (
+      <section className="mb-6">
+        <h2 className="text-xl font-bold text-slate-900 mb-3 border-b border-slate-300 pb-1">
+          Projects
+        </h2>
+        <div className="space-y-4">
+          {projects.map((project) => (
+            <div key={project.id}>
+              <div className="flex justify-between items-baseline mb-1">
+                <h3 className="text-base font-semibold text-slate-900">
+                  {project.name}
+                </h3>
+                {project.startDate && (
+                  <span className="text-sm text-slate-600 whitespace-nowrap ml-4">
+                    {project.startDate}
+                    {project.endDate && ` – ${project.endDate}`}
+                  </span>
                 )}
               </div>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* Experience Section */}
-      {experience.length > 0 && (
-        <section className="mb-6">
-          <h2 className="text-xl font-bold text-slate-900 mb-3 border-b border-slate-300 pb-1">
-            Experience
-          </h2>
-          <div className="space-y-4">
-            {experience.map((exp) => (
-              <div key={exp.id}>
-                <div className="flex justify-between items-baseline mb-1">
-                  <h3 className="text-base font-semibold text-slate-900">
-                    {exp.position}
-                  </h3>
-                  <span className="text-sm text-slate-600 whitespace-nowrap ml-4">
-                    {exp.startDate} – {exp.endDate || 'Present'}
-                  </span>
-                </div>
-                <p className="text-sm text-slate-700 mb-2">
-                  {exp.company}
-                  {exp.location && ` • ${exp.location}`}
-                </p>
-                <ul className="ml-4 space-y-1">
-                  {exp.responsibilities.map((resp, idx) => (
+              {/* SCHEMA CHANGE: Render highlights as bullets (HR-quality format) */}
+              {project.highlights && project.highlights.length > 0 && (
+                <ul className="ml-4 space-y-1 mb-2">
+                  {project.highlights.map((highlight, idx) => (
                     <li key={idx} className="text-sm text-slate-700 list-disc">
-                      {resp}
+                      {highlight}
                     </li>
                   ))}
                 </ul>
+              )}
+              <div className="text-sm text-slate-600">
+                <span className="font-medium">Technologies: </span>
+                {project.technologies.join(', ')}
               </div>
-            ))}
+              {project.url && (
+                <div className="text-sm text-slate-600 mt-1">
+                  <span className="font-medium">URL: </span>
+                  {project.url}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </section>
+    ) : null,
+
+    experience: experience.length > 0 ? (
+      <section className="mb-6">
+        <h2 className="text-xl font-bold text-slate-900 mb-3 border-b border-slate-300 pb-1">
+          Experience
+        </h2>
+        <div className="space-y-4">
+          {experience.map((exp) => (
+            <div key={exp.id}>
+              <div className="flex justify-between items-baseline mb-1">
+                <h3 className="text-base font-semibold text-slate-900">
+                  {exp.position}
+                </h3>
+                <span className="text-sm text-slate-600 whitespace-nowrap ml-4">
+                  {exp.startDate} – {exp.endDate || 'Present'}
+                </span>
+              </div>
+              <p className="text-sm text-slate-700 mb-2">
+                {exp.company}
+                {exp.location && ` • ${exp.location}`}
+              </p>
+              <ul className="ml-4 space-y-1">
+                {exp.responsibilities.map((resp, idx) => (
+                  <li key={idx} className="text-sm text-slate-700 list-disc">
+                    {resp}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+      </section>
+    ) : null,
+
+    certifications: certifications && certifications.length > 0 ? (
+      <section className="mb-6">
+        <h2 className="text-xl font-bold text-slate-900 mb-3 border-b border-slate-300 pb-1">
+          Certifications
+        </h2>
+        <div className="space-y-2">
+          {certifications.map((cert) => (
+            <div key={cert.id}>
+              <div className="flex justify-between items-baseline">
+                <h3 className="text-sm font-semibold text-slate-900">
+                  {cert.name}
+                </h3>
+                <span className="text-sm text-slate-600 whitespace-nowrap ml-4">
+                  {cert.date}
+                </span>
+              </div>
+              <p className="text-sm text-slate-700">{cert.issuer}</p>
+              {cert.url && (
+                <p className="text-sm text-slate-600">{cert.url}</p>
+              )}
+            </div>
+          ))}
+        </div>
+      </section>
+    ) : null,
+  };
+
+  return (
+    <div className="max-w-[210mm] mx-auto bg-white p-8 shadow-lg relative print:shadow-none">
+      {/* Watermark overlay */}
+      {watermark && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-10 print:opacity-20">
+          <div className="text-8xl font-bold text-slate-400 rotate-[-45deg] select-none">
+            FREE EXPORT
           </div>
-        </section>
+        </div>
       )}
 
-      {/* Certifications Section */}
-      {certifications && certifications.length > 0 && (
-        <section className="mb-6">
-          <h2 className="text-xl font-bold text-slate-900 mb-3 border-b border-slate-300 pb-1">
-            Certifications
-          </h2>
-          <div className="space-y-2">
-            {certifications.map((cert) => (
-              <div key={cert.id}>
-                <div className="flex justify-between items-baseline">
-                  <h3 className="text-sm font-semibold text-slate-900">
-                    {cert.name}
-                  </h3>
-                  <span className="text-sm text-slate-600 whitespace-nowrap ml-4">
-                    {cert.date}
-                  </span>
-                </div>
-                <p className="text-sm text-slate-700">{cert.issuer}</p>
-                {cert.url && (
-                  <p className="text-sm text-slate-600">{cert.url}</p>
-                )}
-              </div>
-            ))}
+      {/* Personal Information (Header) — always first, not part of sectionOrder */}
+      <header className="mb-6 border-b-2 border-slate-900 pb-4">
+        <h1 className="text-3xl font-bold text-slate-900 mb-2">
+          {personal.name}
+        </h1>
+        <div className="text-sm text-slate-700 space-y-1">
+          <div className="flex flex-wrap gap-x-4 gap-y-1">
+            <span>{personal.email}</span>
+            <span>{personal.phone}</span>
+            <span>{personal.city}</span>
           </div>
-        </section>
-      )}
+          {(personal.linkedin || personal.github || personal.portfolio) && (
+            <div className="flex flex-wrap gap-x-4 gap-y-1">
+              {personal.linkedin && <span>{personal.linkedin}</span>}
+              {personal.github && <span>{personal.github}</span>}
+              {personal.portfolio && <span>{personal.portfolio}</span>}
+            </div>
+          )}
+        </div>
+      </header>
+
+      {/* Sections rendered in user-defined order */}
+      {sectionOrder.map((key) => (
+        <React.Fragment key={key}>{sectionMap[key]}</React.Fragment>
+      ))}
     </div>
   );
 }
