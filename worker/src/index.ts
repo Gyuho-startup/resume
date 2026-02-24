@@ -28,7 +28,13 @@ interface RenderRequest {
 
 async function handleRequest(request: Request, env: Env): Promise<Response> {
     // Build CORS header value from the ALLOWED_ORIGINS env var.
-    // Defaults to '*' when the var is not set (e.g. local wrangler dev).
+    // SECURITY: ALLOWED_ORIGINS MUST be set in production wrangler.toml secrets.
+    // Only defaults to '*' when the env var is absent (local dev only).
+    // In production, set ALLOWED_ORIGINS to your Vercel app URL, e.g.:
+    //   "https://your-app.vercel.app"
+    if (!env.ALLOWED_ORIGINS) {
+      console.warn('[worker] WARNING: ALLOWED_ORIGINS not set — defaulting to wildcard (dev only)');
+    }
     const allowedOrigin = env.ALLOWED_ORIGINS || '*';
 
     const corsHeaders = {
@@ -77,6 +83,22 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
           }),
           {
             status: 400,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          }
+        );
+      }
+
+      // Enforce maximum HTML payload size: 5 MB
+      // Oversized payloads could cause browser-rendering OOM or DoS
+      const MAX_HTML_BYTES = 5 * 1024 * 1024; // 5 MB
+      if (new TextEncoder().encode(html).length > MAX_HTML_BYTES) {
+        return new Response(
+          JSON.stringify({
+            error_code: 'PAYLOAD_TOO_LARGE',
+            message: 'HTML payload exceeds 5 MB limit',
+          }),
+          {
+            status: 413,
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           }
         );

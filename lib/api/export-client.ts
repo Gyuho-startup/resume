@@ -1,93 +1,27 @@
-import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
-import type { ResumeData, TemplateSlug } from '@/types/resume';
+/**
+ * Client-side PDF export — delegates entirely to the server-side API route.
+ *
+ * jsPDF (v<=4.1.0) was removed due to multiple HIGH-severity CVEs
+ * (GHSA-p5xg-68wr-hm3m, GHSA-9vjf-qc39-jprp, GHSA-67pg-wm7f-q7fj).
+ * No patched version is available in the 4.x line.
+ *
+ * The production export path uses the Cloudflare Browser Rendering Worker,
+ * which produces ATS-safe, server-rendered PDFs. Configure PDF_RENDERER_URL
+ * in your environment variables to enable it.
+ */
 
 /**
- * Generate PDF from HTML element using html2canvas + jsPDF
- * This is used as a fallback when Cloudflare Worker is not configured
+ * Throws a descriptive error when the PDF renderer is not configured.
+ * Previously this fell back to jsPDF + html2canvas on the client; that
+ * fallback has been removed for security reasons.
  */
-export async function generatePDFFromHTML(
-  elementId: string,
-  filename: string
-): Promise<Blob> {
-  const element = document.getElementById(elementId);
-
-  if (!element) {
-    throw new Error(`Element with id "${elementId}" not found`);
-  }
-
-  // Temporarily remove scale transform for proper capture
-  const originalTransform = element.style.transform;
-  const originalWidth = element.style.width;
-  element.style.transform = 'scale(1)';
-  element.style.width = '210mm'; // A4 width
-
-  try {
-    // Capture HTML as canvas
-    const canvas = await html2canvas(element, {
-      scale: 2, // Higher quality
-      useCORS: true,
-      logging: false,
-      backgroundColor: '#ffffff',
-      width: 794, // A4 width in pixels at 96 DPI (210mm)
-      windowWidth: 794,
-    });
-
-    if (canvas.width === 0 || canvas.height === 0) {
-      throw new Error('Failed to capture preview for PDF generation.');
-    }
-
-    // Calculate PDF dimensions (A4 size)
-    const imgWidth = 210; // A4 width in mm
-    const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-    // Create PDF
-    const pdf = new jsPDF({
-      orientation: 'portrait',
-      unit: 'mm',
-      format: 'a4',
-    });
-
-    // Use JPEG to avoid jsPDF v4 PNG header parsing issues
-    const imgData = canvas.toDataURL('image/jpeg', 0.95);
-    pdf.addImage(imgData, 'JPEG', 0, 0, imgWidth, imgHeight);
-
-    // Return as blob
-    return pdf.output('blob');
-  } finally {
-    // Restore original styles
-    element.style.transform = originalTransform;
-    element.style.width = originalWidth;
-  }
-}
-
-/**
- * Generate PDF by rendering template to hidden div and converting to PDF
- */
-export async function generatePDFFromTemplate(
-  templateSlug: TemplateSlug,
-  resumeData: ResumeData,
-  watermark: boolean
-): Promise<Blob> {
-  // Create temporary container
-  const container = document.createElement('div');
-  container.style.position = 'absolute';
-  container.style.left = '-9999px';
-  container.style.width = '210mm'; // A4 width
-  container.style.backgroundColor = 'white';
-  document.body.appendChild(container);
-
-  try {
-    // Dynamically import the template component
-    const { default: TemplateRenderer } = await import(
-      '@/components/templates/TemplateRenderer'
-    );
-
-    // Render template (you'd need to use ReactDOM.render or similar here)
-    // For now, we'll use a simpler approach with the preview element
-
-    throw new Error('Direct template rendering not yet implemented. Please use the preview panel.');
-  } finally {
-    document.body.removeChild(container);
-  }
+export function generatePDFFromHTML(
+  _elementId: string,
+  _filename: string
+): never {
+  throw new Error(
+    'PDF Renderer is not configured. Set the PDF_RENDERER_URL environment ' +
+    'variable to point to your Cloudflare Browser Rendering Worker. ' +
+    'See worker/README.md for setup instructions.'
+  );
 }

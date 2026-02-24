@@ -5,7 +5,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 import { validateBullet } from '@/lib/coach/bullet-validator';
 import { improveBullet } from '@/lib/coach/bullet-improver';
+import { createClient } from '@/lib/supabase/server';
 import type { ResumeData } from '@/types/resume';
+import { rateLimit, getClientIp } from '@/lib/rate-limit';
 
 const client = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -26,6 +28,32 @@ interface BulletImprovement {
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
+    // Auth guard: require a valid Supabase session (logged-in users only)
+    // This prevents anonymous abuse of the expensive AI bullet-improvement pipeline.
+    const supabase = await createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return NextResponse.json(
+        { error_code: 'UNAUTHORIZED', message: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
+    // Rate limit: 5 req/min per user. Each call triggers multiple Anthropic API
+    // round-trips (one per weak bullet). This is the most expensive endpoint.
+    const ip = getClientIp(request);
+    const rlKey = `generate-cv:user:${user.id}:ip:${ip}`;
+    const rl = rateLimit(rlKey, 5, 60_000);
+    if (!rl.allowed) {
+      return NextResponse.json(
+        { error_code: 'RATE_LIMITED', message: 'Too many requests. Please try again later.' },
+        {
+          status: 429,
+          headers: { 'Retry-After': String(Math.ceil((rl.resetAt - Date.now()) / 1000)) },
+        }
+      );
+    }
+
     const body: GenerateCVRequest = await request.json();
     const { resumeData, templateSlug = 'education-first' } = body;
 

@@ -2,10 +2,17 @@ import { NextRequest, NextResponse } from 'next/server';
 import { stripe, EXPORT_PASS_CONFIG } from '@/lib/stripe/config';
 import { createRouteClient } from '@/lib/supabase/route-client';
 import { captureStripeError } from '@/lib/sentry';
+import { rateLimit, getClientIp, rateLimitResponse } from '@/lib/rate-limit';
 
 // Create Stripe Checkout Session for Export Pass purchase
 
 export async function POST(request: NextRequest) {
+  // Rate limit: 5 req/hour per IP to prevent checkout session spam.
+  // Per-email limiting is applied after body parsing (see below).
+  const ip = getClientIp(request);
+  const ipRl = rateLimit(`checkout:ip:${ip}`, 5, 60 * 60_000);
+  if (!ipRl.allowed) return rateLimitResponse(ipRl.resetAt);
+
   try {
     const { email, userId } = await request.json();
 
@@ -24,6 +31,10 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    // Additional per-email rate limit: 3 checkout sessions per hour per email.
+    const emailRl = rateLimit(`checkout:email:${email.toLowerCase()}`, 3, 60 * 60_000);
+    if (!emailRl.allowed) return rateLimitResponse(emailRl.resetAt);
 
     // Check if user already has active pass
     const supabase = createRouteClient();

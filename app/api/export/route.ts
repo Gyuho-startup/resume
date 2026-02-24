@@ -5,6 +5,7 @@ import { createRouteClient } from '@/lib/supabase/route-client';
 import { DEFAULT_SECTION_ORDER } from '@/lib/section-order';
 import { renderTemplateToFullHtml } from '@/lib/templates/html-renderer';
 import { captureExportError, captureRendererError, trackExportDuration, trackExportResult } from '@/lib/sentry';
+import { rateLimit, getClientIp, rateLimitResponse } from '@/lib/rate-limit';
 
 interface ExportRequest {
   templateSlug: TemplateSlug;
@@ -26,6 +27,12 @@ interface ExportRequest {
  * 4. Return PDF bytes to client
  */
 export async function POST(request: NextRequest) {
+  // Rate limit: 10 req/min per IP (applies to guests and authenticated users alike).
+  // Authenticated users benefit from the same limit here; abuse prevention is primary goal.
+  const ip = getClientIp(request);
+  const rl = rateLimit(`export:${ip}`, 10, 60_000);
+  if (!rl.allowed) return rateLimitResponse(rl.resetAt);
+
   try {
     const body: ExportRequest = await request.json();
     const { templateSlug, resumeData, watermark, email, sectionOrder } = body;
@@ -35,6 +42,30 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: 'Missing required fields: templateSlug, resumeData' },
         { status: 400 }
+      );
+    }
+
+    // Validate templateSlug against a strict allowlist to prevent template injection
+    const ALLOWED_TEMPLATE_SLUGS: TemplateSlug[] = [
+      'education-first',
+      'projects-first',
+      'skills-emphasis',
+      'minimal-classic',
+      'modern-ats-safe',
+    ];
+    if (!ALLOWED_TEMPLATE_SLUGS.includes(templateSlug)) {
+      return NextResponse.json(
+        { error: 'Invalid templateSlug value' },
+        { status: 400 }
+      );
+    }
+
+    // Cap resumeData payload to 500 KB to prevent abuse / DoS via oversized bodies
+    const resumeDataBytes = JSON.stringify(resumeData).length;
+    if (resumeDataBytes > 512_000) {
+      return NextResponse.json(
+        { error: 'Resume data exceeds maximum allowed size (500 KB)' },
+        { status: 413 }
       );
     }
 

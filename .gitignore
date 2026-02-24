@@ -25,6 +25,12 @@ yarn-error.log*
 # local env files
 .env*.local
 .env
+.env.production
+.env.staging
+.env.development
+# worker secrets
+worker/.dev.vars
+worker/wrangler.toml.local
 
 # vercel
 .vercel

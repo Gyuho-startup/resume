@@ -63,9 +63,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     });
   } catch (error: unknown) {
     console.error('[/api/coach/session/init] Error:', error);
-    const message = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json(
-      { error_code: 'INTERNAL_ERROR', message },
+      { error_code: 'INTERNAL_ERROR', message: 'An internal error occurred' },
       { status: 500 }
     );
   }

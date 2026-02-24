@@ -9,6 +9,7 @@ import { mergeAIDataIntoResume } from '@/lib/coach/data-bridge';
 import { CAREER_COACH_SYSTEM_PROMPT } from '@/lib/coach/system-prompt';
 import type { CoachRequest, CoachResponse, InterviewStage, ParsedBlock } from '@/lib/coach/types';
 import { captureCoachError } from '@/lib/sentry';
+import { rateLimit, getClientIp, rateLimitResponse } from '@/lib/rate-limit';
 
 // Initialise the Anthropic client once per cold start (not per request)
 const client = new Anthropic({
@@ -48,6 +49,19 @@ function detectNextStage(
 }
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
+  // Rate limit: 20 req/min per IP. Anthropic streaming calls are expensive.
+  const ip = getClientIp(request);
+  const rl = rateLimit(`coach:${ip}`, 20, 60_000);
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { error_code: 'RATE_LIMITED', message: 'Too many requests. Please try again later.' },
+      {
+        status: 429,
+        headers: { 'Retry-After': String(Math.ceil((rl.resetAt - Date.now()) / 1000)) },
+      }
+    );
+  }
+
   try {
     const body: CoachRequest = await request.json();
     const { messages, stage, resumeData, sessionId } = body;
@@ -64,6 +78,16 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       return NextResponse.json(
         { error_code: 'SERVICE_UNAVAILABLE', message: 'AI service not configured' },
         { status: 503 }
+      );
+    }
+
+    // Validate sessionId to prevent path traversal / SSRF via crafted URL segment
+    // Must be a valid UUID (hex + hyphens only)
+    const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (sessionId && !UUID_RE.test(sessionId)) {
+      return NextResponse.json(
+        { error_code: 'INVALID_INPUT', message: 'Invalid session ID format' },
+        { status: 400 }
       );
     }
 
@@ -91,11 +115,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       }
     }
 
-    // Log last user message for debugging
-    const lastUserMsg = messages.filter(m => m.role === 'user').pop();
-    if (lastUserMsg) {
-      console.log('[/api/coach] Last user message:', lastUserMsg.content.substring(0, 100));
-    }
+    // Log message count only — do not log message content (PII)
+    const userMsgCount = messages.filter(m => m.role === 'user').length;
+    console.log('[/api/coach] Processing request:', { userMsgCount, stage });
 
     // Create a streaming response
     const encoder = new TextEncoder();

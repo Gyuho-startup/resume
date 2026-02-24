@@ -4,8 +4,14 @@ export const maxDuration = 30;
 import { NextRequest, NextResponse } from 'next/server';
 import { getOpenAIClient } from '@/lib/voice/openai-client';
 import { TTS_CONFIG, MAX_TTS_CHARS } from '@/lib/voice/whisper-config';
+import { rateLimit, getClientIp, rateLimitResponse } from '@/lib/rate-limit';
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
+  // Rate limit: 30 req/min per IP. OpenAI TTS calls are paid per character.
+  const ip = getClientIp(request);
+  const rl = rateLimit(`synthesise:${ip}`, 30, 60_000);
+  if (!rl.allowed) return rateLimitResponse(rl.resetAt);
+
   if (!process.env.OPENAI_API_KEY) {
     return NextResponse.json(
       { error_code: 'SERVICE_UNAVAILABLE', message: 'TTS service not configured' },
@@ -40,9 +46,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   const resolvedVoice = (voice ?? TTS_CONFIG.voice) as typeof TTS_CONFIG.voice;
 
-  // Log the text being sent to TTS for debugging
-  console.log('[TTS] Generating speech for text:', text.substring(0, 200));
-  console.log('[TTS] Full text length:', text.length, 'chars');
+  // Log text length only — do not log text content (may contain PII)
+  console.log('[TTS] Generating speech. Text length:', text.length, 'chars');
 
   try {
     const openai = getOpenAIClient();

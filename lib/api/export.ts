@@ -1,5 +1,4 @@
 import type { ResumeData, ResumeSectionKey, TemplateSlug } from '@/types/resume';
-import { generatePDFFromHTML } from './export-client';
 
 /**
  * Client-side API for exporting resume to PDF
@@ -37,14 +36,14 @@ export async function exportResumeToPDF(
     throw new Error(`Export failed (${response.status})`);
   }
 
-  // Server returned OK JSON → PDF renderer not configured (dev mode fallback)
+  // Server returned OK JSON → PDF renderer not configured.
+  // The client-side jsPDF fallback has been removed (CVE remediation).
+  // Configure PDF_RENDERER_URL to enable PDF generation.
   if (isJson) {
-    console.log('PDF Renderer not configured. Using client-side fallback.');
-    const previewElement = document.querySelector('[data-pdf-preview]') as HTMLElement;
-    if (!previewElement) {
-      throw new Error('Preview element not found. Cannot generate PDF.');
-    }
-    return await generatePDFFromHTML('pdf-preview-container', 'cv.pdf');
+    throw new Error(
+      'PDF generation is not available: PDF_RENDERER_URL is not configured. ' +
+      'Please set up the Cloudflare Browser Rendering Worker.'
+    );
   }
 
   // Server returned PDF bytes

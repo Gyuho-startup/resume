@@ -4,6 +4,7 @@ export const maxDuration = 30;
 import { NextRequest, NextResponse } from 'next/server';
 import { getOpenAIClient } from '@/lib/voice/openai-client';
 import { WHISPER_CONFIG } from '@/lib/voice/whisper-config';
+import { rateLimit, getClientIp, rateLimitResponse } from '@/lib/rate-limit';
 
 // Session-based failure tracking (in-memory, resets on server restart)
 // In production, use Redis with TTL
@@ -32,6 +33,11 @@ function recordFailure(sessionId: string): number {
 }
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
+  // Rate limit: 30 req/min per IP. OpenAI Whisper calls are paid per second of audio.
+  const ip = getClientIp(request);
+  const rl = rateLimit(`transcribe:${ip}`, 30, 60_000);
+  if (!rl.allowed) return rateLimitResponse(rl.resetAt);
+
   if (!process.env.OPENAI_API_KEY) {
     return NextResponse.json(
       { error_code: 'SERVICE_UNAVAILABLE', message: 'STT service not configured' },
@@ -177,8 +183,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       prompt: WHISPER_CONFIG.prompt,
     });
 
-    console.log('[/api/voice/transcribe] Success. Transcription length:', transcription.text.length);
-    console.log('[/api/voice/transcribe] Transcribed text:', transcription.text);
+    // Log character count only — do not log transcribed text (PII)
+    console.log('[/api/voice/transcribe] Success. Transcription length:', transcription.text.length, 'chars');
 
     // ENHANCED: Comprehensive hallucination pattern library
     // Common Whisper hallucinations when processing silence/noise

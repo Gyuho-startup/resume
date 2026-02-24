@@ -57,10 +57,9 @@ export async function GET(
       token_usage: session.token_usage || { input: 0, output: 0, cost_usd: 0 },
     });
   } catch (error: unknown) {
-    console.error('[/api/coach/session/:id] Error:', error);
-    const message = error instanceof Error ? error.message : 'Unknown error';
+    console.error('[/api/coach/session/:id] GET Error:', error);
     return NextResponse.json(
-      { error_code: 'INTERNAL_ERROR', message },
+      { error_code: 'INTERNAL_ERROR', message: 'An internal error occurred' },
       { status: 500 }
     );
   }
@@ -148,10 +147,9 @@ export async function PATCH(
       message: 'Session updated successfully',
     });
   } catch (error: unknown) {
-    console.error('[/api/coach/session/:id] Error:', error);
-    const message = error instanceof Error ? error.message : 'Unknown error';
+    console.error('[/api/coach/session/:id] PATCH Error:', error);
     return NextResponse.json(
-      { error_code: 'INTERNAL_ERROR', message },
+      { error_code: 'INTERNAL_ERROR', message: 'An internal error occurred' },
       { status: 500 }
     );
   }
