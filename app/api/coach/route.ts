@@ -10,6 +10,7 @@ import { CAREER_COACH_SYSTEM_PROMPT } from '@/lib/coach/system-prompt';
 import type { CoachRequest, CoachResponse, InterviewStage, ParsedBlock } from '@/lib/coach/types';
 import { captureCoachError } from '@/lib/sentry';
 import { rateLimit, getClientIp, rateLimitResponse } from '@/lib/rate-limit';
+import { createClient } from '@/lib/supabase/server';
 
 // Initialise the Anthropic client once per cold start (not per request)
 const client = new Anthropic({
@@ -53,9 +54,20 @@ function detectNextStage(
 }
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
-  // Rate limit: 20 req/min per IP. Anthropic streaming calls are expensive.
+  // Auth guard: require a valid Supabase session. The coach calls Anthropic on every
+  // request and streams responses — unauthenticated access would allow cost exhaustion.
+  const supabase = await createClient();
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError || !user) {
+    return NextResponse.json(
+      { error_code: 'UNAUTHORIZED', message: 'Authentication required' },
+      { status: 401 }
+    );
+  }
+
+  // Rate limit: 20 req/min per user (keyed by user ID, not IP, so auth bypass can't help).
   const ip = getClientIp(request);
-  const rl = rateLimit(`coach:${ip}`, 20, 60_000);
+  const rl = rateLimit(`coach:${user.id}:${ip}`, 20, 60_000);
   if (!rl.allowed) {
     return NextResponse.json(
       { error_code: 'RATE_LIMITED', message: 'Too many requests. Please try again later.' },

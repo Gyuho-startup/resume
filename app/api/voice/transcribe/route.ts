@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getOpenAIClient } from '@/lib/voice/openai-client';
 import { WHISPER_CONFIG } from '@/lib/voice/whisper-config';
 import { rateLimit, getClientIp, rateLimitResponse } from '@/lib/rate-limit';
+import { createClient } from '@/lib/supabase/server';
 
 // Session-based failure tracking (in-memory, resets on server restart)
 // In production, use Redis with TTL
@@ -33,9 +34,19 @@ function recordFailure(sessionId: string): number {
 }
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
-  // Rate limit: 30 req/min per IP. OpenAI Whisper calls are paid per second of audio.
+  // Auth guard: voice pipeline calls OpenAI Whisper (billed per audio second).
+  const supabase = await createClient();
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError || !user) {
+    return NextResponse.json(
+      { error_code: 'UNAUTHORIZED', message: 'Authentication required' },
+      { status: 401 }
+    );
+  }
+
+  // Rate limit: 30 req/min per user. Keyed by user ID to prevent IP-rotation bypass.
   const ip = getClientIp(request);
-  const rl = rateLimit(`transcribe:${ip}`, 30, 60_000);
+  const rl = rateLimit(`transcribe:${user.id}:${ip}`, 30, 60_000);
   if (!rl.allowed) return rateLimitResponse(rl.resetAt);
 
   if (!process.env.OPENAI_API_KEY) {

@@ -4,8 +4,24 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient, createServiceClient } from '@/lib/supabase/server';
+import { rateLimit, getClientIp } from '@/lib/rate-limit';
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
+  // Rate limit: 5 session inits per IP per hour.
+  // Each init inserts a row into conversation_sessions; unbounded creates would
+  // flood the table and incur storage costs.
+  const ip = getClientIp(request);
+  const rl = rateLimit(`session-init:${ip}`, 5, 60 * 60_000);
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { error_code: 'RATE_LIMITED', message: 'Too many session requests. Please try again later.' },
+      {
+        status: 429,
+        headers: { 'Retry-After': String(Math.ceil((rl.resetAt - Date.now()) / 1000)) },
+      }
+    );
+  }
+
   try {
     // Use regular client to check auth
     const supabase = await createClient();
