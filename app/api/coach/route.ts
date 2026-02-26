@@ -16,6 +16,15 @@ const client = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
 
+/** Headers for internal server-to-server calls to /api/coach/session/* */
+function internalHeaders(extra?: Record<string, string>): Record<string, string> {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json', ...extra };
+  if (process.env.INTERNAL_API_SECRET) {
+    headers['Authorization'] = `Bearer ${process.env.INTERNAL_API_SECRET}`;
+  }
+  return headers;
+}
+
 
 /**
  * Determines the next interview stage based on which tags appeared in the
@@ -93,7 +102,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       const sessionCheckUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3001'}/api/coach/session/${sessionId}`;
 
       try {
-        const sessionRes = await fetch(sessionCheckUrl);
+        const sessionRes = await fetch(sessionCheckUrl, { headers: internalHeaders() });
         if (sessionRes.ok) {
           const sessionData = await sessionRes.json();
           hasPaid = sessionData.payment_status === 'paid';
@@ -179,7 +188,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           if (sessionId) {
             try {
               const sessionCheckUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3001'}/api/coach/session/${sessionId}`;
-              const sessionRes = await fetch(sessionCheckUrl);
+              const sessionRes = await fetch(sessionCheckUrl, { headers: internalHeaders() });
 
               if (sessionRes.ok) {
                 const sessionData = await sessionRes.json();
@@ -217,7 +226,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
               const updateUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3001'}/api/coach/session/${sessionId}`;
               await fetch(updateUrl, {
                 method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
+                headers: internalHeaders(),
                 body: JSON.stringify({
                   conversation_data: updatedConversation,
                   resume_data: updatedResumeData,

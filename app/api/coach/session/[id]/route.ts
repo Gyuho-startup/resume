@@ -1,6 +1,10 @@
 // @ts-nocheck - Supabase types need regeneration for conversation_sessions table
-// GET /api/coach/session/:id
-// Check session status and time remaining
+// GET /api/coach/session/:id  — internal use only (called by /api/coach)
+// PATCH /api/coach/session/:id — internal use only (called by /api/coach)
+//
+// Both endpoints require the INTERNAL_API_SECRET bearer token.
+// payment_status is intentionally NOT patchable here — it is set exclusively
+// by the Stripe webhook (/api/stripe/webhook) to prevent payment bypass.
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/server';
@@ -8,15 +12,36 @@ import type { Database } from '@/types/supabase';
 
 type ConversationSession = Database['public']['Tables']['conversation_sessions']['Row'];
 
+/**
+ * Verify the shared internal API secret.
+ * Returns true only if the Authorization header matches INTERNAL_API_SECRET.
+ * In development, passes through when the secret is not configured.
+ */
+function verifyInternalSecret(request: NextRequest): boolean {
+  const secret = process.env.INTERNAL_API_SECRET;
+  if (!secret) {
+    // Allow in development without configuration; block in production.
+    return process.env.NODE_ENV !== 'production';
+  }
+  const authHeader = request.headers.get('authorization');
+  return authHeader === `Bearer ${secret}`;
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse> {
+  if (!verifyInternalSecret(request)) {
+    return NextResponse.json(
+      { error_code: 'UNAUTHORIZED', message: 'Internal access only' },
+      { status: 401 }
+    );
+  }
+
   try {
     const { id } = await params;
     const supabase = createServiceClient();
 
-    // Fetch session
     // @ts-ignore - Table exists but Supabase types need regeneration
     const { data: session, error } = await supabase
       .from('conversation_sessions')
@@ -31,14 +56,12 @@ export async function GET(
       );
     }
 
-    // Calculate time remaining
     const now = new Date();
     const expiresAt = new Date(session.expires_at);
     const timeRemaining = expiresAt.getTime() - now.getTime();
     const isExpired = timeRemaining <= 0;
 
-    // Check if in grace period (2 minutes after expiration)
-    const GRACE_PERIOD_MS = 2 * 60 * 1000; // 2 minutes
+    const GRACE_PERIOD_MS = 2 * 60 * 1000;
     const gracePeriodEnd = new Date(expiresAt.getTime() + GRACE_PERIOD_MS);
     const inGracePeriod = isExpired && now < gracePeriodEnd;
 
@@ -65,18 +88,22 @@ export async function GET(
   }
 }
 
-// PATCH /api/coach/session/:id
-// Update session (conversation data, resume data, payment status, token usage)
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse> {
+  if (!verifyInternalSecret(request)) {
+    return NextResponse.json(
+      { error_code: 'UNAUTHORIZED', message: 'Internal access only' },
+      { status: 401 }
+    );
+  }
+
   try {
     const { id } = await params;
     const body = await request.json();
     const supabase = createServiceClient();
 
-    // Fetch current session to get existing token usage
     // @ts-ignore - Table exists but Supabase types need regeneration
     const { data: currentSession, error: fetchError } = await supabase
       .from('conversation_sessions')
@@ -85,14 +112,15 @@ export async function PATCH(
       .single();
 
     if (fetchError) {
-      console.error('[/api/coach/session/:id] Failed to fetch current session:', fetchError);
       return NextResponse.json(
         { error_code: 'SESSION_NOT_FOUND', message: 'Session not found' },
         { status: 404 }
       );
     }
 
-    // Prepare update data
+    // Only allow updating conversation data fields.
+    // payment_status is intentionally excluded — it is set exclusively by
+    // the Stripe webhook to prevent payment bypass attacks.
     const updateData: Record<string, unknown> = {};
 
     if (body.conversation_data !== undefined) {
@@ -103,29 +131,16 @@ export async function PATCH(
       updateData.resume_data = body.resume_data;
     }
 
-    if (body.payment_status !== undefined) {
-      updateData.payment_status = body.payment_status;
-    }
-
-    // Handle token usage: accumulate with existing usage
     if (body.token_usage !== undefined) {
       const existingUsage = currentSession.token_usage || { input: 0, output: 0, cost_usd: 0 };
       const newUsage = body.token_usage;
-
       updateData.token_usage = {
         input: existingUsage.input + newUsage.input,
         output: existingUsage.output + newUsage.output,
         cost_usd: existingUsage.cost_usd + newUsage.cost_usd,
       };
-
-      console.log('[/api/coach/session/:id] Token usage update:', {
-        existing: existingUsage,
-        new: newUsage,
-        cumulative: updateData.token_usage,
-      });
     }
 
-    // Update session
     // @ts-ignore - Table exists but Supabase types need regeneration
     const { error: updateError } = await supabase
       .from('conversation_sessions')
@@ -133,19 +148,13 @@ export async function PATCH(
       .eq('id', id);
 
     if (updateError) {
-      console.error('[/api/coach/session/:id] Update error:', updateError);
       return NextResponse.json(
         { error_code: 'UPDATE_FAILED', message: 'Failed to update session' },
         { status: 500 }
       );
     }
 
-    console.log('[/api/coach/session/:id] Session updated successfully:', id);
-
-    return NextResponse.json({
-      success: true,
-      message: 'Session updated successfully',
-    });
+    return NextResponse.json({ success: true });
   } catch (error: unknown) {
     console.error('[/api/coach/session/:id] PATCH Error:', error);
     return NextResponse.json(
