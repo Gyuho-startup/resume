@@ -16,11 +16,6 @@ const client = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
 
-// Log API key status on module load (do not log the actual key)
-console.log('[/api/coach] Anthropic API key configured:', !!process.env.ANTHROPIC_API_KEY);
-if (process.env.ANTHROPIC_API_KEY) {
-  console.log('[/api/coach] API key format:', process.env.ANTHROPIC_API_KEY.substring(0, 20) + '...');
-}
 
 /**
  * Determines the next interview stage based on which tags appeared in the
