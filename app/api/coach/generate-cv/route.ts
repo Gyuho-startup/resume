@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 import { validateBullet } from '@/lib/coach/bullet-validator';
 import { improveBullet } from '@/lib/coach/bullet-improver';
-import { createClient } from '@/lib/supabase/server';
+import { createClient, createServiceClient } from '@/lib/supabase/server';
 import type { ResumeData } from '@/types/resume';
 import { rateLimit, getClientIp } from '@/lib/rate-limit';
 
@@ -211,16 +211,40 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     console.log(`[/api/coach/generate-cv] Bullet quality: ${validBullets}/${totalBullets} (${passRate.toFixed(1)}%)`);
     console.log(`[/api/coach/generate-cv] Applied ${improvements.length} improvements`);
 
-    // Step 3: Generate PDF via worker
+    // Step 3: Check if user has a valid Export Pass before generating PDF.
+    // Server-side check using service client (bypasses RLS) so we have the
+    // authoritative answer without relying on cookie forwarding in internal fetches.
+    const db = createServiceClient();
+    const now = new Date().toISOString();
+    const { data: activePurchase } = await db
+      .from('purchases')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('status', 'paid')
+      .lte('pass_start_at', now)
+      .gte('pass_end_at', now)
+      .limit(1)
+      .single();
+    const watermark = !activePurchase; // false (no watermark) only if pass is valid
+
+    // Build headers for internal server-to-server call.
+    // INTERNAL_API_SECRET tells /api/export to trust the verified watermark flag
+    // instead of re-running the auth check (which would fail without cookie forwarding).
+    const internalHeaders: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (process.env.INTERNAL_API_SECRET) {
+      internalHeaders['Authorization'] = `Bearer ${process.env.INTERNAL_API_SECRET}`;
+    }
+
+    // Step 4: Generate PDF via export route
     const pdfResponse = await fetch(
       `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3001'}/api/export`,
       {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: internalHeaders,
         body: JSON.stringify({
           resumeData: improvedResumeData,
           templateSlug,
-          watermark: false, // AI Coach users get watermark-free PDF
+          watermark,
           sectionOrder: [
             'personal',
             'summary',

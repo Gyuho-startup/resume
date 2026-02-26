@@ -69,11 +69,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Server-side Export Pass verification — never trust the client's watermark flag
-    // Default to watermark=true; only skip watermark if DB confirms a valid pass
+    // Server-side Export Pass verification — never trust the client's watermark flag.
+    // Exception: internal server-to-server calls from /api/coach/generate-cv are
+    // pre-verified (service-client DB check) and identified by INTERNAL_API_SECRET.
+    // For all other callers, re-verify via DB to prevent client-side bypass.
+    const internalSecret = process.env.INTERNAL_API_SECRET;
+    const authHeader = request.headers.get('authorization');
+    const isInternalCall = !!(internalSecret && authHeader === `Bearer ${internalSecret}`);
+
     let actualWatermark = true;
     if (watermark === false) {
-      actualWatermark = !(await hasValidExportPass(email));
+      if (isInternalCall) {
+        // Trust the watermark flag — the calling route already verified via service client
+        actualWatermark = false;
+      } else {
+        actualWatermark = !(await hasValidExportPass(email));
+      }
     }
 
     // Call Cloudflare Worker to generate PDF
