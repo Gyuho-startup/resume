@@ -67,7 +67,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   // Rate limit: 20 req/min per user (keyed by user ID, not IP, so auth bypass can't help).
   const ip = getClientIp(request);
-  const rl = rateLimit(`coach:${user.id}:${ip}`, 20, 60_000);
+  const rl = await rateLimit(`coach:${user.id}:${ip}`, 20, 60_000);
   if (!rl.allowed) {
     return NextResponse.json(
       { error_code: 'RATE_LIMITED', message: 'Too many requests. Please try again later.' },
@@ -178,12 +178,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           });
 
           // After streaming completes, parse and send structured data
-          console.log('[/api/coach] Full AI response:', fullText.substring(0, 200));
           const blocks = parseCoachResponse(fullText);
           const updatedResumeData = mergeAIDataIntoResume(blocks, resumeData ?? {});
           const nextStage = detectNextStage(blocks, stage as InterviewStage);
           const displayText = getDisplayText(blocks);
-          console.log('[/api/coach] Display text:', displayText.substring(0, 200));
 
           // Check if payment gate should trigger (after 10 conversation turns)
           let hasPaymentGate = false;

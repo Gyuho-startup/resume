@@ -9,7 +9,7 @@ import { rateLimit, getClientIp } from '@/lib/rate-limit';
 export async function POST(request: NextRequest) {
   // Rate limit: 10 req/min per IP to prevent email enumeration
   const ip = getClientIp(request);
-  const rl = rateLimit(`check-pass:${ip}`, 10, 60_000);
+  const rl = await rateLimit(`check-pass:${ip}`, 10, 60_000);
   if (!rl.allowed) {
     return NextResponse.json(
       { error_code: 'RATE_LIMITED', message: 'Too many requests. Please try again later.' },

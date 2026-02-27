@@ -11,7 +11,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   // Each init inserts a row into conversation_sessions; unbounded creates would
   // flood the table and incur storage costs.
   const ip = getClientIp(request);
-  const rl = rateLimit(`session-init:${ip}`, 5, 60 * 60_000);
+  const rl = await rateLimit(`session-init:${ip}`, 5, 60 * 60_000);
   if (!rl.allowed) {
     return NextResponse.json(
       { error_code: 'RATE_LIMITED', message: 'Too many session requests. Please try again later.' },

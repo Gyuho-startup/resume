@@ -15,14 +15,12 @@ type ConversationSession = Database['public']['Tables']['conversation_sessions']
 /**
  * Verify the shared internal API secret.
  * Returns true only if the Authorization header matches INTERNAL_API_SECRET.
- * In development, passes through when the secret is not configured.
+ * The secret is required unconditionally — absence always returns false.
+ * Set INTERNAL_API_SECRET in .env.local for local development.
  */
 function verifyInternalSecret(request: NextRequest): boolean {
   const secret = process.env.INTERNAL_API_SECRET;
-  if (!secret) {
-    // Allow in development without configuration; block in production.
-    return process.env.NODE_ENV !== 'production';
-  }
+  if (!secret) return false; // secret must always be configured
   const authHeader = request.headers.get('authorization');
   return authHeader === `Bearer ${secret}`;
 }

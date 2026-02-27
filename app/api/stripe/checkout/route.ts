@@ -10,7 +10,7 @@ export async function POST(request: NextRequest) {
   // Rate limit: 5 req/hour per IP to prevent checkout session spam.
   // Per-email limiting is applied after body parsing (see below).
   const ip = getClientIp(request);
-  const ipRl = rateLimit(`checkout:ip:${ip}`, 5, 60 * 60_000);
+  const ipRl = await rateLimit(`checkout:ip:${ip}`, 5, 60 * 60_000);
   if (!ipRl.allowed) return rateLimitResponse(ipRl.resetAt);
 
   try {
@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Additional per-email rate limit: 3 checkout sessions per hour per email.
-    const emailRl = rateLimit(`checkout:email:${email.toLowerCase()}`, 3, 60 * 60_000);
+    const emailRl = await rateLimit(`checkout:email:${email.toLowerCase()}`, 3, 60 * 60_000);
     if (!emailRl.allowed) return rateLimitResponse(emailRl.resetAt);
 
     // Check if user already has active pass

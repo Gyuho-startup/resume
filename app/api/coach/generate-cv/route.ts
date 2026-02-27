@@ -43,7 +43,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     // round-trips (one per weak bullet). This is the most expensive endpoint.
     const ip = getClientIp(request);
     const rlKey = `generate-cv:user:${user.id}:ip:${ip}`;
-    const rl = rateLimit(rlKey, 5, 60_000);
+    const rl = await rateLimit(rlKey, 5, 60_000);
     if (!rl.allowed) {
       return NextResponse.json(
         { error_code: 'RATE_LIMITED', message: 'Too many requests. Please try again later.' },
@@ -78,7 +78,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           if (validation.isValid) {
             validBullets++;
           } else {
-            console.log(`[/api/coach/generate-cv] Weak bullet in experience[${i}].responsibilities[${j}]: ${bullet.substring(0, 100)}`);
+            console.log(`[/api/coach/generate-cv] Weak bullet at experience[${i}].responsibilities[${j}] (validation failed)`);
             const improved = await improveBullet(
               bullet,
               {
@@ -117,7 +117,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           if (validation.isValid) {
             validBullets++;
           } else {
-            console.log(`[/api/coach/generate-cv] Weak bullet in projects[${i}].highlights[${j}]: ${bullet.substring(0, 100)}`);
+            console.log(`[/api/coach/generate-cv] Weak bullet at projects[${i}].highlights[${j}] (validation failed)`);
             const improved = await improveBullet(
               bullet,
               {
@@ -156,7 +156,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           if (validation.isValid) {
             validBullets++;
           } else {
-            console.log(`[/api/coach/generate-cv] Weak bullet in education[${i}].achievements[${j}]: ${bullet.substring(0, 100)}`);
+            console.log(`[/api/coach/generate-cv] Weak bullet at education[${i}].achievements[${j}] (validation failed)`);
             const improved = await improveBullet(
               bullet,
               {

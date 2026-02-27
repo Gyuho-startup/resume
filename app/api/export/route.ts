@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
   // Rate limit: 10 req/min per IP (applies to guests and authenticated users alike).
   // Authenticated users benefit from the same limit here; abuse prevention is primary goal.
   const ip = getClientIp(request);
-  const rl = rateLimit(`export:${ip}`, 10, 60_000);
+  const rl = await rateLimit(`export:${ip}`, 10, 60_000);
   if (!rl.allowed) return rateLimitResponse(rl.resetAt);
 
   try {

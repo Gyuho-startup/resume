@@ -46,7 +46,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   // Rate limit: 30 req/min per user. Keyed by user ID to prevent IP-rotation bypass.
   const ip = getClientIp(request);
-  const rl = rateLimit(`transcribe:${user.id}:${ip}`, 30, 60_000);
+  const rl = await rateLimit(`transcribe:${user.id}:${ip}`, 30, 60_000);
   if (!rl.allowed) return rateLimitResponse(rl.resetAt);
 
   if (!process.env.OPENAI_API_KEY) {
@@ -244,7 +244,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     if (isHallucination) {
       const failureCount = recordFailure(sessionId);
-      console.warn('[/api/voice/transcribe] ⚠️ Detected hallucination pattern:', transcription.text);
+      console.warn('[/api/voice/transcribe] ⚠️ Hallucination pattern detected (text redacted)');
       return NextResponse.json(
         {
           error_code: 'HALLUCINATION_DETECTED',
@@ -262,7 +262,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     // Reject if too short (likely noise)
     if (text.length < 5) {
       const failureCount = recordFailure(sessionId);
-      console.warn('[/api/voice/transcribe] ⚠️ Text too short:', text);
+      console.warn(`[/api/voice/transcribe] ⚠️ Text too short: ${text.length} chars`);
       return NextResponse.json(
         {
           error_code: 'TEXT_TOO_SHORT',
@@ -278,7 +278,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const hasLetters = /[a-zA-Z]/.test(text);
     if (!hasLetters) {
       const failureCount = recordFailure(sessionId);
-      console.warn('[/api/voice/transcribe] ⚠️ No letters detected:', text);
+      console.warn('[/api/voice/transcribe] ⚠️ No letters detected in transcription');
       return NextResponse.json(
         {
           error_code: 'NO_SPEECH_DETECTED',

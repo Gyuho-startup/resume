@@ -20,7 +20,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   // Rate limit: 30 req/min per user. Keyed by user ID to prevent IP-rotation bypass.
   const ip = getClientIp(request);
-  const rl = rateLimit(`synthesise:${user.id}:${ip}`, 30, 60_000);
+  const rl = await rateLimit(`synthesise:${user.id}:${ip}`, 30, 60_000);
   if (!rl.allowed) return rateLimitResponse(rl.resetAt);
 
   if (!process.env.OPENAI_API_KEY) {
